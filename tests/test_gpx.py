@@ -7,9 +7,12 @@ from matplotlib.mlab import FormatDatetime
 
 import gpx
 
-@pytest.fixture
+@pytest.fixture(params=[
+    'RK_gpx _2012-12-16_1734.gpx',
+    'RK_gpx _2012-12-18_2012.gpx',
+])
 def xml(request):
-    fp = open('RK_gpx _2012-12-18_2012.gpx', 'rb')
+    fp = open(request.param, 'rb')
 
     request.addfinalizer(fp.close)
 
@@ -39,9 +42,25 @@ def test_plot_speeds(xml):
     vels = track.calculate_vels()
     assert len(vels) == len(track) - 1
 
+    longsmoo = gpx.smooth(vels.vel, window_len=len(vels) / 2)
+    shortsmoo = gpx.smooth(vels.vel)
+    assert len(longsmoo) == len(shortsmoo) == len(vels)
+
     fig, ax = plt.subplots(1)
 
-    ax.plot(vels.time, vels.vel)
+    ax.plot(vels.time, shortsmoo, vels.time, longsmoo)
+
+    fig.autofmt_xdate()
+    plt.show()
+
+def test_plot_anom(xml):
+
+    track = gpx.Track(xml)
+
+    anom = track.calculate_anomolies()
+
+    fig, ax = plt.subplots(1)
+    ax.plot(anom.time, anom.anom)
 
     fig.autofmt_xdate()
     plt.show()
