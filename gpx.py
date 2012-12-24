@@ -1,5 +1,6 @@
 
 from datetime import datetime
+from math import pi
 
 from lxml import etree
 from pyproj import Geod
@@ -65,13 +66,14 @@ class Track(np.recarray):
                                ('time', datetime),
                               ]).view(cls)
 
-    def calculate_vels(self):
+    def calculate_vels(self, smooth_vels=False):
 
         g = Geod(ellps='WGS84')
 
         # calculate the azimuths and distances between consecutive points
         azi, _, dist = g.inv(self.lon[:-1], self.lat[:-1],
                              self.lon[1:], self.lat[1:])
+        azi = np.deg2rad(azi)
 
         # calculate the time deltas between consecutive points
         seconds = np.vectorize(lambda td: td.seconds)
@@ -79,10 +81,19 @@ class Track(np.recarray):
 
         # calculate the velocities
         # remove any nans by making them zero
-        vels = np.nan_to_num(dist / times) * 3.6
+        vels = np.nan_to_num(dist / times) * 3.6 # m/s to km/h
 
-        a = np.rec.fromarrays([self.time[1:], azi, dist, vels],
-                              names=('time', 'azi', 'dist', 'vel'))
+        if smooth_vels:
+            vels = smooth(vels)
+
+        # decompose vels into u and v
+        u = vels * np.cos((pi / 4) - azi)
+        v = vels * np.sin((pi / 4) - azi)
+
+        a = np.rec.fromarrays([self.time[1:], self.lat[1:], self.lon[1:],
+                               azi, dist, vels, u, v],
+                              names=('time', 'lat', 'lon',
+                                     'azi', 'dist', 'vel', 'u', 'v'))
 
         return a
 

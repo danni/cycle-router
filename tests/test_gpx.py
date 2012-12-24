@@ -1,15 +1,15 @@
-from datetime import datetime
+from math import *
 
 import pytest
 
 from matplotlib import pyplot as plt
-from matplotlib.mlab import FormatDatetime
+from mpl_toolkits.basemap import Basemap
 
 import gpx
 
 @pytest.fixture(params=[
     'RK_gpx _2012-12-16_1734.gpx',
-    'RK_gpx _2012-12-18_2012.gpx',
+#    'RK_gpx _2012-12-18_2012.gpx',
 ])
 def xml(request):
     fp = open(request.param, 'rb')
@@ -63,4 +63,30 @@ def test_plot_anom(xml):
     ax.plot(anom.time, anom.anom)
 
     fig.autofmt_xdate()
+    plt.show()
+
+def test_plot_map_vels(xml):
+    track = gpx.Track(xml)
+    vels = track.calculate_vels(smooth_vels=True)
+
+    lllat, lllon = min(track.lat) - 0.01, min(track.lon) - 0.01
+    urlat, urlon = max(track.lat) + 0.01, max(track.lon) + 0.01
+
+    # find the centre point
+    lat_0 = (urlat - lllat) / 2 + lllat
+    lon_0 = (urlon - lllon) / 2 + lllon
+
+    # FIXME: rsphere required because my Proj is screwy
+    m = Basemap(projection='cyl',
+                llcrnrlon=lllon, llcrnrlat=lllat,
+                urcrnrlon=urlon, urcrnrlat=urlat,
+                lat_0=lat_0, lon_0=lon_0,
+                resolution='h')
+                # rsphere=(6378137.00, 6356752.3142))
+
+    x, y = m(vels.lon, vels.lat)
+
+    m.drawcoastlines()
+    m.drawrivers()
+    m.barbs(x, y, vels.u, vels.v)
     plt.show()
