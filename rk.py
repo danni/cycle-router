@@ -55,6 +55,7 @@ class RK(object):
         self.client = Client()
         self.pages = None
         self.accepts = {
+            'fitness_activity': 'FitnessActivity',
             'fitness_activities': 'FitnessActivityFeed',
         }
 
@@ -147,3 +148,10 @@ class RK(object):
 
             r = self._request(r['next'],
                               accepts=self.accepts['fitness_activities'])
+
+    def get_fitness_item(self, path):
+        """
+        Returns a single fitness item
+        """
+
+        return self._request(path, accepts=self.accepts['fitness_activity'])

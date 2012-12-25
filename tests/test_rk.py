@@ -39,4 +39,13 @@ def test_get_fitness_items(rk):
     for item in rk.get_fitness_items():
         print item
 
+def test_get_fitness_item(rk):
+    item = rk.get_fitness_items().next()
+
+    print item
+
+    item = rk.get_fitness_item(item['uri'])
+
+    print item
+
     assert 0
