@@ -1,0 +1,11 @@
+cycle-router
+============
+
+This project aims to become a model for optimising cycling routes by finding
+temporal changes in velocity anomolies and connecting them to things we can
+forecast (like winds). Currently it is an investigation into this process.
+
+People may find rk.py useful, which is a Python module to talk the RunKeeper
+API. Please use your own client ID and client secret if you use this module.
+
+Thanks :)
