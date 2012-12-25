@@ -54,6 +54,9 @@ class RK(object):
 
         self.client = Client()
         self.pages = None
+        self.accepts = {
+            'fitness_activities': 'FitnessActivityFeed',
+        }
 
     def authorize(self):
 
@@ -115,7 +118,9 @@ class RK(object):
             page = name[4:]
             try:
                 uri = self.pages[page]
-                return lambda: self._request(uri)
+                accepts = self.accepts.get(page, None)
+
+                return lambda: self._request(uri, accepts=accepts)
             except KeyError as e:
                 raise AttributeError(e)
 
@@ -124,3 +129,21 @@ class RK(object):
         self.pages = self._request('/user')
 
         return self.pages
+
+    def get_fitness_items(self):
+        """
+        Yields the items from the fitness feed.
+        """
+
+        r = self.get_fitness_activities()
+
+        while r:
+
+            for i in r['items']:
+                yield i
+
+            if 'next' not in r:
+                break
+
+            r = self._request(r['next'],
+                              accepts=self.accepts['fitness_activities'])

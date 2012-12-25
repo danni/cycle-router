@@ -26,3 +26,17 @@ def test_get_profile(rk):
 
     assert 'profile' in resp
     assert 'name' in resp
+
+def test_get_fitness_activities(rk):
+    resp = rk.get_fitness_activities()
+
+    assert 'items' in resp
+
+    for item in resp['items']:
+        assert 'uri' in item
+
+def test_get_fitness_items(rk):
+    for item in rk.get_fitness_items():
+        print item
+
+    assert 0
