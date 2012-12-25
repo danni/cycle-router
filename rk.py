@@ -11,6 +11,7 @@ from httplib2 import Http
 CLIENT_ID = '970809bbcfe94e18b0a1ccedd9f1810c'
 CLIENT_SECRET = '20db9043724d4bf59fdb542391c49415'
 
+API_URL = 'https://api.runkeeper.com'
 AUTHORIZATION_URL = 'https://runkeeper.com/apps/authorize'
 ACCESS_TOKEN_URL = 'https://runkeeper.com/apps/token'
 
@@ -18,7 +19,7 @@ class AuthenticationException(Exception):
     pass
 
 class Client(Http):
-    def request(self, uri, data, method='GET', headers={}, body=None):
+    def request(self, uri, data={}, method='GET', headers={}, body=None):
 
         if method == 'POST':
             headers['Content-Type'] = content_type = \
@@ -52,6 +53,7 @@ class RK(object):
     def __init__(self):
 
         self.client = Client()
+        self.pages = None
 
     def authorize(self):
 
@@ -86,3 +88,39 @@ class RK(object):
         self.token = content['access_token']
 
         return self.token
+
+    def _request(self, path, accepts=None, **kwargs):
+
+        if not accepts:
+            accepts = path[1:].title()
+
+        headers={
+            'Authorization': 'Bearer {}'.format(self.token),
+            'Accept': 'application/vnd.com.runkeeper.{}+json'.format(accepts),
+        }
+
+        headers.update(kwargs.get('headers', {}))
+
+        _, content = self.client.request(API_URL + path, headers=headers,
+                                         **kwargs)
+        content = json.loads(content)
+
+        return content
+
+    def __getattr__(self, name):
+        if name.startswith('get_'):
+            if not self.pages:
+                self.get_user()
+
+            page = name[4:]
+            try:
+                uri = self.pages[page]
+                return lambda: self._request(uri)
+            except KeyError as e:
+                raise AttributeError(e)
+
+    def get_user(self):
+        self.pages = {}
+        self.pages = self._request('/user')
+
+        return self.pages

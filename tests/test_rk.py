@@ -13,3 +13,16 @@ def rk(request):
 
 def test_get_user(rk):
     resp = rk.get_user()
+
+    print resp
+
+    assert 'profile' in resp
+    assert 'nutrition' in resp
+
+def test_get_profile(rk):
+    resp = rk.get_profile()
+
+    print resp
+
+    assert 'profile' in resp
+    assert 'name' in resp
