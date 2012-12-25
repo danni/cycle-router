@@ -73,7 +73,7 @@ class Track(np.recarray):
         # calculate the azimuths and distances between consecutive points
         azi, _, dist = g.inv(self.lon[:-1], self.lat[:-1],
                              self.lon[1:], self.lat[1:])
-        azi = np.deg2rad(azi)
+        azi = np.deg2rad(-90 - azi)
 
         # calculate the time deltas between consecutive points
         seconds = np.vectorize(lambda td: td.seconds)
@@ -82,24 +82,6 @@ class Track(np.recarray):
         # calculate the velocities
         # remove any nans by making them zero
         vels = np.nan_to_num(dist / times) * 3.6 # m/s to km/h
-
-        if smooth_vels:
-            vels = smooth(vels)
-
-        # decompose vels into u and v
-        u = vels * np.cos((pi / 4) - azi)
-        v = vels * np.sin((pi / 4) - azi)
-
-        a = np.rec.fromarrays([self.time[1:], self.lat[1:], self.lon[1:],
-                               azi, dist, vels, u, v],
-                              names=('time', 'lat', 'lon',
-                                     'azi', 'dist', 'vel', 'u', 'v'))
-
-        return a
-
-    def calculate_anomolies(self):
-
-        vels = self.calculate_vels()
 
         # the idea here is to generate a long term average for the cycle
         # which we can consider the cyclists quiescent speed for the journey -
@@ -111,12 +93,21 @@ class Track(np.recarray):
         # finally the anomalies are expressed as a percentage variation of the
         # cyclists speed from their quiescent speed
 
-        longsmoo = smooth(vels.vel, window_len=len(vels) / 2)
-        shortsmoo = smooth(vels.vel)
+        longsmoo = smooth(vels, window_len=len(vels) / 2)
+        shortsmoo = smooth(vels)
 
         anom = (shortsmoo - longsmoo) / longsmoo
 
-        a = np.rec.fromarrays([vels.time, anom],
-                              names=('time', 'anom'))
+        if smooth_vels:
+            vels = smooth(vels)
+
+        # decompose vels into u and v
+        u = vels * np.cos(azi)
+        v = vels * np.sin(azi)
+
+        a = np.rec.fromarrays([self.time[1:], self.lat[1:], self.lon[1:],
+                               azi, dist, vels, u, v, anom],
+                              names=('time', 'lat', 'lon',
+                                     'azi', 'dist', 'vel', 'u', 'v', 'anom'))
 
         return a

@@ -57,7 +57,7 @@ def test_plot_anom(xml):
 
     track = gpx.Track(xml)
 
-    anom = track.calculate_anomolies()
+    anom = track.calculate_vels()
 
     fig, ax = plt.subplots(1)
     ax.plot(anom.time, anom.anom)
@@ -88,5 +88,5 @@ def test_plot_map_vels(xml):
 
     m.drawcoastlines()
     m.drawrivers()
-    m.barbs(x, y, vels.u, vels.v)
+    m.barbs(x, y, vels.u, vels.v, vels.anom, cmap=plt.get_cmap('RdBu_r'))
     plt.show()
