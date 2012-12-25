@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+
+import os
+import os.path
+import subprocess
+
+from rk import RK
+
+rk = RK()
+rk.authorize()
+
+try:
+    os.mkdir('gpx')
+except OSError:
+    pass
+
+os.chdir('gpx')
+
+for item in rk.get_fitness_items():
+    if item['type'] != 'Cycling':
+        continue
+    # odds of being an integer number of minutes is low
+    elif item['duration'] % 60 == 0:
+        continue
