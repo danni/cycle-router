@@ -87,7 +87,7 @@ class Track(np.recarray):
 
         # calculate the velocities
         # remove any nans by making them zero
-        vels = np.nan_to_num(dist / times) * 3.6 # m/s to km/h
+        vels = (dist / times) * 3.6 # m/s to km/h
 
         # the idea here is to generate a long term average for the cycle
         # which we can consider the cyclists quiescent speed for the journey -
