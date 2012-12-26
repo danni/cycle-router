@@ -11,12 +11,16 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from datetime import datetime
+from datetime import datetime, timedelta
+import json
 from math import pi
 
 from lxml import etree
 from pyproj import Geod
 import numpy as np
+
+class BadInputException(Exception):
+    pass
 
 def smooth(x, window_len=11, window='flat'):
     """
@@ -131,8 +135,27 @@ class GPX(Track):
             # why is this?
             pass
 
-class JSON(Track):
+class RKJSON(Track):
+    "RunKeeper JSON format"
 
     @classmethod
     def _parse(cls, fp):
-        pass
+        track = json.load(fp)
+
+        if 'path' not in track:
+            raise BadInputException("No path in dataset")
+
+        starttime = datetime.strptime(track['start_time'],
+                                      '%a, %d %b %Y %H:%M:%S')
+
+        for point in track['path']:
+
+            if point['type'] == 'manual':
+                raise BadInputException("Manually edited dataset")
+
+            lat = point['latitude']
+            lon = point['longitude']
+            elev = point['altitude']
+            time = starttime + timedelta(seconds=point['timestamp'])
+
+            yield (lat, lon, elev, time)
