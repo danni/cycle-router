@@ -74,6 +74,15 @@ class Track(np.recarray):
         seconds = np.vectorize(lambda td: td.seconds)
         times = seconds(self.time[1:] - self.time[:-1])
 
+        valid = times.nonzero()
+
+        timestamps = self.time[1:][valid]
+        lats = self.lat[1:][valid]
+        lons = self.lon[1:][valid]
+        azi = azi[valid]
+        dist = dist[valid]
+        times = times[valid]
+
         # calculate the velocities
         # remove any nans by making them zero
         vels = np.nan_to_num(dist / times) * 3.6 # m/s to km/h
@@ -100,7 +109,10 @@ class Track(np.recarray):
         u = vels * np.cos(azi)
         v = vels * np.sin(azi)
 
-        a = np.rec.fromarrays([self.time[1:], self.lat[1:], self.lon[1:],
+        assert timestamps.shape == lats.shape == lons.shape == azi.shape == \
+               dist.shape == vels.shape == u.shape == v.shape == anom.shape
+
+        a = np.rec.fromarrays([timestamps, lats, lons,
                                azi, dist, vels, u, v, anom],
                               names=('time', 'lat', 'lon',
                                      'azi', 'dist', 'vel', 'u', 'v', 'anom'))
