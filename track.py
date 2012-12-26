@@ -10,6 +10,8 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Authors: Danielle Madeley <danielle@madeley.id.au>
 
 from datetime import datetime, timedelta
 import json
