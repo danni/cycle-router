@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import json
 import os
 import os.path
 import subprocess
@@ -23,15 +24,20 @@ rk = RK()
 rk.authorize()
 
 try:
-    os.mkdir('gpx')
+    os.mkdir('tracks')
 except OSError:
     pass
-
-os.chdir('gpx')
 
 for item in rk.get_fitness_items():
     if item['type'] != 'Cycling':
         continue
-    # odds of being an integer number of minutes is low
-    elif item['duration'] % 60 == 0:
+
+    filename = os.path.join('tracks', item['uri'].split('/')[-1] + '.json')
+
+    if os.path.exists(filename):
         continue
+
+    with open(filename, 'w') as f:
+        print "Downloading {}...".format(filename)
+        resp = rk.get_fitness_item(item['uri'])
+        json.dump(resp, f, indent=2)
