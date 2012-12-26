@@ -44,7 +44,7 @@ def smooth(x, window_len=11, window='flat'):
 class Track(np.recarray):
 
     def __new__(cls, fp):
-        track = cls._parse(fp)
+        track = list(cls._parse(fp))
 
         # initialise ourselves as a recarray
         return np.array(track,
@@ -116,8 +116,6 @@ class GPX(Track):
 
     @classmethod
     def _parse(cls, fp):
-        track = []
-
         try:
             for _, elem in etree.iterparse(fp, tag=GPX.elem('{}trkpt')):
                 lat = float(elem.get('lat'))
@@ -126,11 +124,15 @@ class GPX(Track):
                 time = datetime.strptime(elem.find(GPX.elem('{}time')).text,
                                          '%Y-%m-%dT%H:%M:%SZ')
 
-                track.append((lat, lon, elev, time))
+                yield (lat, lon, elev, time)
 
                 elem.clear()
         except etree.XMLSyntaxError:
             # why is this?
             pass
 
-        return track
+class JSON(Track):
+
+    @classmethod
+    def _parse(cls, fp):
+        pass
