@@ -43,32 +43,8 @@ def smooth(x, window_len=11, window='flat'):
 
 class Track(np.recarray):
 
-    NAMESPACES = {
-        None: 'http://www.topografix.com/GPX/1/1',
-        'gpxtpx': 'http://www.garmin.com/xmlschemas/TrackPointExtension/v1',
-    }
-
-    @staticmethod
-    def elem(tag, namespace=None):
-        return tag.format('{%s}' % Track.NAMESPACES[namespace])
-
     def __new__(cls, fp):
-        track = []
-
-        try:
-            for _, elem in etree.iterparse(fp, tag=Track.elem('{}trkpt')):
-                lat = float(elem.get('lat'))
-                lon = float(elem.get('lon'))
-                elev = float(elem.find(Track.elem('{}ele')).text)
-                time = datetime.strptime(elem.find(Track.elem('{}time')).text,
-                                         '%Y-%m-%dT%H:%M:%SZ')
-
-                track.append((lat, lon, elev, time))
-
-                elem.clear()
-        except etree.XMLSyntaxError:
-            # why is this?
-            pass
+        track = cls._parse(fp)
 
         # initialise ourselves as a recarray
         return np.array(track,
@@ -77,6 +53,9 @@ class Track(np.recarray):
                                ('elev', float),
                                ('time', datetime),
                               ]).view(cls)
+
+    def _parse(cls, fp):
+        raise NotImplemented()
 
     def calculate_vels(self, smooth_vels=False):
 
@@ -123,3 +102,35 @@ class Track(np.recarray):
                                      'azi', 'dist', 'vel', 'u', 'v', 'anom'))
 
         return a
+
+class GPX(Track):
+
+    NAMESPACES = {
+        None: 'http://www.topografix.com/GPX/1/1',
+        'gpxtpx': 'http://www.garmin.com/xmlschemas/TrackPointExtension/v1',
+    }
+
+    @staticmethod
+    def elem(tag, namespace=None):
+        return tag.format('{%s}' % GPX.NAMESPACES[namespace])
+
+    @classmethod
+    def _parse(cls, fp):
+        track = []
+
+        try:
+            for _, elem in etree.iterparse(fp, tag=GPX.elem('{}trkpt')):
+                lat = float(elem.get('lat'))
+                lon = float(elem.get('lon'))
+                elev = float(elem.find(GPX.elem('{}ele')).text)
+                time = datetime.strptime(elem.find(GPX.elem('{}time')).text,
+                                         '%Y-%m-%dT%H:%M:%SZ')
+
+                track.append((lat, lon, elev, time))
+
+                elem.clear()
+        except etree.XMLSyntaxError:
+            # why is this?
+            pass
+
+        return track

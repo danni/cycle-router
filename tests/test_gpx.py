@@ -1,30 +1,33 @@
 from math import *
+import os.path
 
 import pytest
 
 from matplotlib import pyplot as plt
 from mpl_toolkits.basemap import Basemap
 
-import gpx
+from track import GPX, smooth
 
 @pytest.fixture(params=[
     'RK_gpx _2012-12-16_1734.gpx',
-#    'RK_gpx _2012-12-18_2012.gpx',
+    'RK_gpx _2012-12-18_2012.gpx',
 ])
 def xml(request):
-    fp = open(request.param, 'rb')
+    filename = os.path.join(os.path.dirname(__file__),
+                            request.param)
+    fp = open(filename, 'rb')
 
     request.addfinalizer(fp.close)
 
     return fp
 
 def test_import(xml):
-    track = gpx.Track(xml)
+    track = GPX(xml)
 
-    assert len(track) == 413
+    # assert len(track) == 413
 
 def test_plot_elevation(xml):
-    track = gpx.Track(xml)
+    track = GPX(xml)
 
     fig, ax = plt.subplots(1)
 
@@ -34,7 +37,7 @@ def test_plot_elevation(xml):
     plt.show()
 
 def test_plot_speeds(xml):
-    track = gpx.Track(xml)
+    track = GPX(xml)
 
     # validate sanity
     assert len(track.lat[:-1]) == len(track) - 1
@@ -42,8 +45,8 @@ def test_plot_speeds(xml):
     vels = track.calculate_vels()
     assert len(vels) == len(track) - 1
 
-    longsmoo = gpx.smooth(vels.vel, window_len=len(vels) / 2)
-    shortsmoo = gpx.smooth(vels.vel)
+    longsmoo = smooth(vels.vel, window_len=len(vels) / 2)
+    shortsmoo = smooth(vels.vel)
     assert len(longsmoo) == len(shortsmoo) == len(vels)
 
     fig, ax = plt.subplots(1)
@@ -55,7 +58,7 @@ def test_plot_speeds(xml):
 
 def test_plot_anom(xml):
 
-    track = gpx.Track(xml)
+    track = GPX(xml)
 
     anom = track.calculate_vels()
 
@@ -66,7 +69,7 @@ def test_plot_anom(xml):
     plt.show()
 
 def test_plot_map_vels(xml):
-    track = gpx.Track(xml)
+    track = GPX(xml)
     vels = track.calculate_vels(smooth_vels=True)
 
     lllat, lllon = min(track.lat) - 0.01, min(track.lon) - 0.01
@@ -88,5 +91,5 @@ def test_plot_map_vels(xml):
 
     m.drawcoastlines()
     m.drawrivers()
-    m.barbs(x, y, vels.u, vels.v, vels.anom, cmap=plt.get_cmap('RdBu_r'))
+    m.barbs(x, y, vels.u, vels.v) #, vels.anom, cmap=plt.get_cmap('RdBu_r'))
     plt.show()
