@@ -18,7 +18,7 @@ import json
 from math import pi
 
 from lxml import etree
-from pyproj import Geod
+from pyproj import Proj
 import numpy as np
 
 class BadInputException(Exception):
@@ -63,14 +63,19 @@ class Track(np.recarray):
     def _parse(cls, fp):
         raise NotImplemented()
 
-    def calculate_vels(self, smooth_vels=False):
+    def calculate_vels(self, smooth_vels=False, utm_zone=55):
 
-        g = Geod(ellps='WGS84')
+        p = Proj(proj='utm', zone=utm_zone, ellps='WGS84')
 
-        # calculate the azimuths and distances between consecutive points
-        azi, _, dist = g.inv(self.lon[:-1], self.lat[:-1],
-                             self.lon[1:], self.lat[1:])
-        azi = np.deg2rad(-90 - azi)
+        # project coordinates into eastings and northings
+        # This simplifies our geodetics, but requests us to specify a UTM zone
+        x, y = p(self.lon, self.lat)
+
+        rise = y[1:] - y[:-1]
+        run = x[1:] - x[:-1]
+
+        dist = np.sqrt(rise ** 2 + run ** 2)
+        theta = np.arctan2(rise, run)
 
         # calculate the time deltas between consecutive points
         seconds = np.vectorize(lambda td: td.seconds)
@@ -81,13 +86,14 @@ class Track(np.recarray):
         timestamps = self.time[1:][valid]
         lats = self.lat[1:][valid]
         lons = self.lon[1:][valid]
-        azi = azi[valid]
+        theta = theta[valid]
         dist = dist[valid]
         times = times[valid]
 
         # calculate the velocities
         # remove any nans by making them zero
         vels = (dist / times) * 3.6 # m/s to km/h
+        bearing = (90 - np.rad2deg(theta)) % 360
 
         # the idea here is to generate a long term average for the cycle
         # which we can consider the cyclists quiescent speed for the journey -
@@ -108,16 +114,19 @@ class Track(np.recarray):
             vels = smooth(vels)
 
         # decompose vels into u and v
-        u = vels * np.cos(azi)
-        v = vels * np.sin(azi)
+        u = vels * np.cos(theta)
+        v = vels * np.sin(theta)
 
-        assert timestamps.shape == lats.shape == lons.shape == azi.shape == \
-               dist.shape == vels.shape == u.shape == v.shape == anom.shape
+        assert timestamps.shape == lats.shape == lons.shape == \
+               bearing.shape == dist.shape == vels.shape == u.shape == \
+               v.shape == anom.shape
 
         a = np.rec.fromarrays([timestamps, lats, lons,
-                               azi, dist, vels, u, v, anom],
+                               bearing, dist, vels,
+                               u, v, anom],
                               names=('time', 'lat', 'lon',
-                                     'azi', 'dist', 'vel', 'u', 'v', 'anom'))
+                                     'bearing', 'dist', 'vel',
+                                     'u', 'v', 'anom'))
 
         return a
 

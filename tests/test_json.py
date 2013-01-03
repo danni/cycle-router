@@ -4,6 +4,7 @@ from glob import glob
 import pytest
 
 from matplotlib import pyplot as plt
+from mpl_toolkits.basemap import Basemap
 
 from track import RKJSON, smooth
 
@@ -15,6 +16,17 @@ def json(request):
     request.addfinalizer(fp.close)
 
     return fp
+
+def test_point_scatter(json):
+    track = RKJSON(json)
+
+    fig, ax = plt.subplots(1)
+    ax.scatter(track.lon, track.lat)
+
+    for (i, p) in enumerate(zip(track.lon, track.lat)):
+        plt.annotate(str(i), p)
+
+    plt.show()
 
 def test_plots(json):
     track = RKJSON(json)
@@ -33,4 +45,30 @@ def test_plots(json):
     ax2.plot(vels.time, vels.anom * 100)
 
     fig.autofmt_xdate()
+    plt.show()
+
+def test_plot_map_vels(json):
+    track = RKJSON(json)
+    vels = track.calculate_vels()
+
+    lllat, lllon = min(track.lat) - 0.01, min(track.lon) - 0.01
+    urlat, urlon = max(track.lat) + 0.01, max(track.lon) + 0.01
+
+    print vels.bearing
+
+    # find the centre point
+    lat_0 = (urlat - lllat) / 2 + lllat
+    lon_0 = (urlon - lllon) / 2 + lllon
+
+    # FIXME: rsphere required because my Proj is screwy
+    m = Basemap(projection='cyl',
+                llcrnrlon=lllon, llcrnrlat=lllat,
+                urcrnrlon=urlon, urcrnrlat=urlat,
+                lat_0=lat_0, lon_0=lon_0,
+                resolution='h')
+
+    x, y = m(vels.lon, vels.lat)
+    plt.annotate("Start", (x[0], y[0]))
+
+    m.barbs(x, y, vels.u, vels.v) #, vels.anom, cmap=plt.get_cmap('RdBu_r'))
     plt.show()
