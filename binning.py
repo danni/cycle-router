@@ -46,14 +46,25 @@ class Grid(np.ndarray):
 
         return self
 
+    def bin_direction(self, point, bearing):
+        # g = Geod(ellps='WGS84')
+
+        # p = list(reversed(point)) + list(reversed(self.refpoint))
+        # refazi, _, _ = g.inv(*p)
+
+        # print azi
+        # print refazi
+        pass
+
     def add_track(self, track, recalculate=True):
         vels = track.calculate_vels()
         xbins = np.digitize(vels.lon, self.x) - 1
         ybins = np.digitize(vels.lat, self.y) - 1
 
-        for (x, y, anom) in zip(xbins, ybins, vels.anom):
-            self._elems_total[x, y] += anom
-            self._nelems[x, y] += 1
+        for (x, y, anom, bearing) in zip(xbins, ybins, vels.anom, vels.bearing):
+            # rows, columns
+            self._elems_total[y, x] += anom
+            self._nelems[y, x] += 1
 
         if recalculate:
             self._recalculate()

@@ -42,20 +42,28 @@ def test_binning_all():
     assert grid.y.shape == (50,)
     assert grid.shape == (50, 50)
 
-    fig, ax = plt.subplots(1)
-    ax.set_title("Speed Anomaly (No Directional Binning)")
-    ax.set_xlabel("Longitude")
-    ax.set_ylabel("Latitude")
-    cs = ax.contourf(grid.x, grid.y, grid, cmap=plt.get_cmap('RdBu_r'))
-    cs.set_clim(-1, 1)
-    ax.contour(grid.x, grid.y, grid)
-    fig.colorbar(cs)
+    fig, (ax1, ax2) = plt.subplots(1, 2)
 
-    # x,y coordinates are lon,lat
-    plt.annotate("Docklands", (144.948, -37.815))
-    plt.annotate("Brunswick", (144.960, -37.767))
-    plt.annotate("Brunswick East", (144.979, -37.769))
-    plt.annotate("Richmond", (144.999, -37.819))
-    plt.annotate("Fitzroy", (144.978, -37.800))
+    ax1.set_title("Speed Anomaly (No Directional Binning)")
+    ax2.set_title("n datapoints")
+
+    cs = ax1.pcolor(grid.x, grid.y, grid, cmap=plt.get_cmap('RdBu_r'))
+    cs.set_clim(-1, 1)
+    # fig.colorbar(cs)
+
+    cs = ax2.pcolor(grid.x, grid.y, grid._nelems, cmap=plt.get_cmap('binary'))
+
+    for ax in [ax1, ax2]:
+        ax.set_xlabel("Longitude")
+        ax.set_ylabel("Latitude")
+        ax.set_aspect('equal')
+
+        ax.annotate("Docklands", (144.948, -37.815))
+        ax.annotate("Brunswick", (144.960, -37.767))
+        ax.annotate("Richmond", (144.999, -37.819))
+        ax.annotate("Fitzroy", (144.978, -37.800))
+        ax.annotate("Moonee Ponds", (144.92, -37.765))
+        # ax.annotate("Melbourne", (144.96306, -37.81361))
+        ax.annotate("Altona", (144.83, -37.868))
 
     plt.show()
