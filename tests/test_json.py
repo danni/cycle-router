@@ -6,7 +6,8 @@ import pytest
 from matplotlib import pyplot as plt
 from mpl_toolkits.basemap import Basemap
 
-from track import RKJSON, smooth
+from track import RKJSON, smooth, BadInputException
+from binning import Grid
 
 @pytest.fixture
 def json(request):
@@ -71,4 +72,38 @@ def test_plot_map_vels(json):
     plt.annotate("Start", (x[0], y[0]))
 
     m.barbs(x, y, vels.u, vels.v) #, vels.anom, cmap=plt.get_cmap('RdBu_r'))
+    plt.show()
+
+def test_plot_all_map_vels():
+    def gen_tracks():
+        for fn in glob('tracks/*.json'):
+            with open(fn, 'rb') as fp:
+                try:
+                    yield RKJSON(fp)
+                except BadInputException:
+                    pass
+
+    tracks = list(gen_tracks())
+
+    print "Considering {} tracks".format(len(tracks))
+
+    lllat, urlat, lllon, urlon = Grid.calculate_bounds(tracks)
+
+    m = Basemap(projection='cyl',
+                llcrnrlon=lllon, llcrnrlat=lllat,
+                urcrnrlon=urlon, urcrnrlat=urlat,
+                resolution='h')
+    m.drawcoastlines()
+
+    for t in tracks:
+        vels = t.calculate_vels()
+        x, y = m(vels.lon, vels.lat)
+        m.barbs(x, y, vels.u, vels.v)
+
+    plt.annotate("Docklands", (144.948, -37.815))
+    plt.annotate("Brunswick", (144.960, -37.767))
+    plt.annotate("Brunswick East", (144.979, -37.769))
+    plt.annotate("Richmond", (144.999, -37.819))
+    plt.annotate("Fitzroy", (144.978, -37.800))
+
     plt.show()

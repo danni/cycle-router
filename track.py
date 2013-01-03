@@ -122,10 +122,10 @@ class Track(np.recarray):
                v.shape == anom.shape
 
         a = np.rec.fromarrays([timestamps, lats, lons,
-                               bearing, dist, vels,
+                               theta, bearing, dist, vels,
                                u, v, anom],
                               names=('time', 'lat', 'lon',
-                                     'bearing', 'dist', 'vel',
+                                     'theta', 'bearing', 'dist', 'vel',
                                      'u', 'v', 'anom'))
 
         return a
@@ -172,9 +172,6 @@ class RKJSON(Track):
                                       '%a, %d %b %Y %H:%M:%S')
 
         for point in track['path']:
-
-            if point['type'] == 'manual':
-                raise BadInputException("Manually edited dataset")
 
             lat = point['latitude']
             lon = point['longitude']
