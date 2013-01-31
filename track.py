@@ -106,7 +106,12 @@ class Track(np.recarray):
         # cyclists speed from their quiescent speed
 
         longsmoo = smooth(vels, window_len=len(vels) / 2)
-        shortsmoo = smooth(vels)
+
+        try:
+            shortsmoo = smooth(vels)
+        except ValueError:
+            # track is too short to smooth
+            shortsmoo = vels
 
         anom = (shortsmoo - longsmoo) / longsmoo
 
