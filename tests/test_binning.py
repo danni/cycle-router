@@ -5,6 +5,16 @@ from matplotlib import pyplot as plt
 from track import RKJSON, BadInputException
 from binning import Grid
 
+def test_bin_direction():
+    filename = glob('tracks/*.json')[0]
+
+    with open(filename) as f:
+        track = RKJSON(f)
+        vels = track.calculate_vels()
+        grid = Grid([track])
+
+        print grid.bin_direction((vels.lat[0], vels.lon[0]), vels.bearing[0])
+
 def test_binning_one():
     filename = glob('tracks/*.json')[0]
 
@@ -12,9 +22,9 @@ def test_binning_one():
         track = RKJSON(f)
         grid = Grid([track])
 
-        assert grid.x.shape == (50,)
-        assert grid.y.shape == (50,)
-        assert grid.shape == (50, 50)
+        assert grid.x.shape == (100,)
+        assert grid.y.shape == (100,)
+        assert grid.shape == (100, 100)
 
         fig, ax = plt.subplots(1)
 
@@ -38,9 +48,9 @@ def test_binning_all():
 
     grid = Grid(list(generate_tracks()))
 
-    assert grid.x.shape == (50,)
-    assert grid.y.shape == (50,)
-    assert grid.shape == (50, 50)
+    assert grid.x.shape == (100,)
+    assert grid.y.shape == (100,)
+    assert grid.shape == (100, 100)
 
     fig, (ax1, ax2) = plt.subplots(1, 2)
 

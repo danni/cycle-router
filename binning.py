@@ -26,7 +26,7 @@ class Grid(np.ndarray):
         return min(bounds.minlat), max(bounds.maxlat), \
                min(bounds.minlon), max(bounds.maxlon)
 
-    def __new__(cls, tracks, xnum=50, ynum=50):
+    def __new__(cls, tracks, xnum=100, ynum=100):
 
         minlat, maxlat, minlon, maxlon = cls.calculate_bounds(tracks)
 
