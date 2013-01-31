@@ -14,6 +14,17 @@
 # Authors: Danielle Madeley <danielle@madeley.id.au>
 
 import numpy as np
+from pyproj import Proj
+
+class LatLon(object):
+    def __init__(self, lat, lon):
+        self.lat = lat
+        self.lon = lon
+
+MELBOURNE = LatLon(-37.81361, 144.96306) # Coordinates of Melbourne
+
+class Direction(object):
+    INBOUND, OUTBOUND = range(2)
 
 class Grid(np.ndarray):
 
@@ -26,16 +37,17 @@ class Grid(np.ndarray):
         return min(bounds.minlat), max(bounds.maxlat), \
                min(bounds.minlon), max(bounds.maxlon)
 
-    def __new__(cls, tracks, xnum=100, ynum=100):
+    def __new__(cls, tracks, xnum=100, ynum=100, refpoint=MELBOURNE):
 
         minlat, maxlat, minlon, maxlon = cls.calculate_bounds(tracks)
 
         # initialise ourselves
-        self = np.zeros((xnum, ynum)).view(Grid)
+        self = np.zeros((2, xnum, ynum)).view(Grid)
 
-        self._elems_total = np.zeros((xnum, ynum))
-        self._nelems = np.zeros((xnum, ynum), dtype=int)
+        self._elems_total = np.zeros((2, xnum, ynum))
+        self._nelems = np.zeros((2, xnum, ynum), dtype=int)
 
+        self.refpoint = refpoint
         self.x = np.linspace(minlon, maxlon, num=xnum)
         self.y = np.linspace(minlat, maxlat, num=ynum)
 
@@ -46,25 +58,39 @@ class Grid(np.ndarray):
 
         return self
 
-    def bin_direction(self, point, bearing):
-        # g = Geod(ellps='WGS84')
+    def bin_direction(self, point, bearing=None, utm_zone=55):
+        p = Proj(proj='utm', zone=utm_zone, ellps='WGS84')
 
-        # p = list(reversed(point)) + list(reversed(self.refpoint))
-        # refazi, _, _ = g.inv(*p)
+        if bearing is None:
+            bearing = point.bearing
 
-        # print azi
-        # print refazi
-        pass
+        refx, refy = p(self.refpoint.lon, self.refpoint.lat)
+        px, py = p(point.lon, point.lat)
+
+        rise = refy - py
+        run = refx - px
+
+        dist = np.sqrt(rise ** 2 + run ** 2)
+        theta = np.arctan2(rise, run)
+
+        beta = (90 - np.rad2deg(theta)) % 360
+
+        if beta - 90 < bearing <= beta + 90:
+            return Direction.INBOUND
+        else:
+            return Direction.OUTBOUND
 
     def add_track(self, track, recalculate=True):
         vels = track.calculate_vels()
         xbins = np.digitize(vels.lon, self.x) - 1
         ybins = np.digitize(vels.lat, self.y) - 1
 
-        for (x, y, anom, bearing) in zip(xbins, ybins, vels.anom, vels.bearing):
+        for (x, y, vel) in zip(xbins, ybins, vels):
+            d = self.bin_direction(vel)
+
             # rows, columns
-            self._elems_total[y, x] += anom
-            self._nelems[y, x] += 1
+            self._elems_total[d, y, x] += vel.anom
+            self._nelems[d, y, x] += 1
 
         if recalculate:
             self._recalculate()
