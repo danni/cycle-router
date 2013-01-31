@@ -22,8 +22,7 @@ from tempfile import NamedTemporaryFile
 
 from httplib2 import Http
 
-CLIENT_ID = '970809bbcfe94e18b0a1ccedd9f1810c'
-CLIENT_SECRET = '20db9043724d4bf59fdb542391c49415'
+from keys import * # API keys: CLIENT_ID, CLIENT_SECRET
 
 API_URL = 'https://api.runkeeper.com'
 AUTHORIZATION_URL = 'https://runkeeper.com/apps/authorize'
