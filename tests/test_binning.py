@@ -1,7 +1,8 @@
 from glob import glob
 
+import numpy as np
 import scipy as sp
-import scipy.signal
+import scipy.stats
 from matplotlib import pyplot as plt
 
 from track import RKJSON, BadInputException
@@ -106,7 +107,7 @@ def test_binning_all():
 
     plt.show()
 
-def test_binning_corr():
+def test_binning_inverted_relationship():
 
     def generate_tracks():
         for fn in glob('tracks/*.json'):
@@ -122,36 +123,39 @@ def test_binning_corr():
     assert grid.y.shape == (100,)
     assert grid.shape == (2, 100, 100)
 
-    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
+    fig, ax = plt.subplots(1, 1)
 
-    ax1.set_title("Speed Anomaly (In)")
-    ax2.set_title("Speed Anomaly (Out)")
-    ax3.set_title("Speed Anomaly (Out, inverted)")
+    ax.set_title("Speed Anomalies")
+    ax.set_xlabel("Inbound")
+    ax.set_ylabel("Outbound")
+    ax.set_aspect('equal')
 
-    corr = sp.signal.correlate2d(grid[Direction.INBOUND],
-                                 -grid[Direction.OUTBOUND],
-                                 mode='same')
-    for ax, d in [
-                  (ax1, grid[Direction.INBOUND]),
-                  (ax2, grid[Direction.OUTBOUND]),
-                  (ax3, -grid[Direction.OUTBOUND]),
-                  (ax4, corr),
-                  ]:
-        cs = ax.pcolor(grid.x, grid.y, d, cmap=plt.get_cmap('RdBu_r'))
-        cs.set_clim(-0.8, 0.8)
+    x = grid[Direction.INBOUND].flatten()
+    y = grid[Direction.OUTBOUND].flatten()
 
-    for ax in [ax1, ax2, ax3, ax4]:
-        ax.set_xlabel("Longitude")
-        ax.set_ylabel("Latitude")
-        ax.set_aspect('equal')
+    # filter out values close to zero
+    i = np.abs(x) > 0.01
+    x = x[i]; y = y[i]
+    i = np.abs(y) > 0.01
+    x = x[i]; y = y[i]
 
-        # ax.annotate("Docklands", (144.948, -37.815))
-        # ax.annotate("Brunswick", (144.960, -37.767))
-        # ax.annotate("Richmond", (144.999, -37.819))
-        # ax.annotate("Fitzroy", (144.978, -37.800))
-        # ax.annotate("Moonee Ponds", (144.92, -37.765))
-        # ax.annotate("Altona", (144.83, -37.868))
+    print x.shape
+    print y.shape
+    assert x.shape[0] == y.shape[0]
+
+    m, c, r, p, se = sp.stats.linregress(x, y)
+
+    ax.scatter(x, y)
+
+    x1 = np.array([-1, 1])
+    ax.plot(x1, m * x1 + c, 'r')
+    ax.text(1.4, 0.9, """m = {}
+c = {}
+r = {}
+r^2 = {}
+p = {}
+se = {}""".format(m, c, r, r**2, p, se),
+        horizontalalignment='right',
+        verticalalignment='top')
 
     plt.show()
-
-
