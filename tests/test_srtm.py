@@ -1,10 +1,14 @@
+import pytest
+from matplotlib import pyplot as plt
 from numpy.testing import assert_almost_equal
 
 from srtm import SRTM
 
-def test_load_srtm():
-    grid = SRTM()
+@pytest.fixture
+def grid():
+    return SRTM()
 
+def test_load_srtm(grid):
     # assert grid makes sense shapewise
     assert grid.ndim == 2
     assert grid.lats.ndim == grid.lons.ndim == 1
@@ -30,3 +34,17 @@ def test_load_srtm():
     # Brunswick
     assert grid.lats[0] >= -37.767 >= grid.lats[-1] and \
            grid.lons[0] <= 144.960 <= grid.lons[-1]
+
+def test_plot_srtm(grid):
+
+    fig, (ax1, ax2) = plt.subplots(2, 1)
+
+    ax1.set_title("Meridional Elevation (Lon = {})".format(grid.lons[0]))
+    ax1.set_xlabel("Latitude")
+    ax1.plot(grid.lats, grid[:, 0])
+
+    ax2.set_title("Zonal Elevation (Lat = {})".format(grid.lats[0]))
+    ax2.set_xlabel("Longitude")
+    ax2.plot(grid.lons, grid[0, :])
+
+    plt.show()
