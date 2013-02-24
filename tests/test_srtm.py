@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 from matplotlib import pyplot as plt
 from numpy.testing import assert_almost_equal
@@ -46,5 +47,48 @@ def test_plot_srtm(grid):
     ax2.set_title("Zonal Elevation (Lat = {})".format(grid.lats[0]))
     ax2.set_xlabel("Longitude")
     ax2.plot(grid.lons, grid[0, :])
+
+    plt.show()
+
+def test_against_google(grid):
+
+    import json
+    from rk import Client
+
+    client = Client()
+
+    # make a request to the Google Elevation API
+    _, content = client.request(
+        'http://maps.googleapis.com/maps/api/elevation/json',
+        data=dict(path='{},{}|{},{}'.format(grid.lats[0], grid.lons[0],
+                                            grid.lats[-1], grid.lons[0]),
+                  samples=100,
+                  sensor='false'))
+
+    content = json.loads(content)
+
+    assert content['status'] == 'OK'
+    assert 'results' in content
+
+    data = np.empty(shape=(len(content['results']), 3))
+
+    for i, rec in enumerate(content['results']):
+        data[i] = [rec['location']['lat'],
+                   rec['location']['lng'],
+                   rec['elevation']]
+
+    data = data.view(type=np.recarray,
+                     dtype=[('lats', float),
+                            ('lons', float),
+                            ('elev', float)])
+
+    fig, ax1 = plt.subplots(1, 1)
+
+    ax1.set_title("SRTM v Google (Lon = {})".format(grid.lons[0]))
+    ax1.set_xlabel("Latitude")
+    ax1.plot(grid.lats, grid[:, 0])
+    ax1.plot(data.lats, data.elev, 'r')
+    ax1.set_xlim(-38.5, -33.5)
+    ax1.set_ylim(-20, 200)
 
     plt.show()
