@@ -17,8 +17,11 @@ from contextlib import contextmanager
 
 import gdal
 import numpy as np
+import numpy.ma as ma
 from gdalconst import *
 from numpy.testing import assert_almost_equal
+
+MIN_INT16 = -2**15
 
 @contextmanager
 def GDAL_Open(*args, **kwargs):
@@ -32,7 +35,7 @@ def GDAL_Open(*args, **kwargs):
         # how do I close ds?
         pass
 
-class SRTM(np.ndarray):
+class SRTM(ma.MaskedArray):
     """
     Loads Geoscience Australia SRTM DEM data from ESRI grid format.
     """
@@ -55,7 +58,11 @@ class SRTM(np.ndarray):
 
             band = ds.GetRasterBand(1)
             data = band.ReadAsArray()
-            self = data.view(cls)
+
+            # determine the mask
+            mask = (data == MIN_INT16)
+
+            self = ma.array(data, mask=mask).view(cls)
 
             self.binsize = sizex
 

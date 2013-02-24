@@ -4,7 +4,7 @@ from numpy.testing import assert_almost_equal
 
 from srtm import SRTM
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def grid():
     return SRTM()
 
