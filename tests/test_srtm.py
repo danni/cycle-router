@@ -1,13 +1,21 @@
 import numpy as np
 import pytest
 from matplotlib import pyplot as plt
-from numpy.testing import assert_almost_equal
+from numpy.testing import assert_almost_equal, assert_allclose
 
 from srtm import SRTM
+
+from tests.test_json import json as track_json
 
 @pytest.fixture(scope='module')
 def grid():
     return SRTM()
+
+@pytest.fixture
+def track(track_json):
+    from track import RKJSON
+
+    return RKJSON(track_json)
 
 def test_load_srtm(grid):
     # assert grid makes sense shapewise
@@ -123,7 +131,24 @@ def test_extract_point(grid, lat, lon):
     res = result['resolution']
 
     # assert the calculated value is within the resolution of Google's value
-    assert (desr - res / 2) <= calc <= (desr + res / 2)
+    assert_allclose(calc, desr, atol=res / 2)
 
-def test_extract_track(grid):
-    pass
+def test_extract_track_against_rk(grid, track):
+    elevs = grid.extract_track(track)
+
+    assert len(elevs) == len(track)
+
+    # calculate RMS error
+    rmse = np.sqrt(np.mean((elevs - track.elev) ** 2))
+    nrms = rmse / (elevs.max() - elevs.min())
+
+    print "RMS error", rmse
+    print "NRMS", nrms
+
+    fig, ax1 = plt.subplots(1, 1)
+
+    ax1.set_title("SRTM v RK")
+    ax1.plot(elevs)
+    ax1.plot(track.elev, 'r')
+
+    plt.show()

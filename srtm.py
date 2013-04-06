@@ -111,4 +111,4 @@ class SRTM(ma.MaskedArray):
         Extracts the elevation data for a track.
         """
 
-        pass
+        return np.array([ self.extract_point(*p) for p in zip(track.lat, track.lon) ])
