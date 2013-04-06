@@ -35,6 +35,9 @@ def GDAL_Open(*args, **kwargs):
         # how do I close ds?
         pass
 
+class OutOfBounds(Exception):
+    pass
+
 class SRTM(ma.MaskedArray):
     """
     Loads Geoscience Australia SRTM DEM data from ESRI grid format.
@@ -75,3 +78,37 @@ class SRTM(ma.MaskedArray):
 
     def __repr__(self):
         return '{}()'.format(self.__class__.__name__)
+
+    def extract_point(self, lat, lon):
+        """
+        Extract a single point of data by latitude, longitude.
+        """
+
+        # origin of grid is top-left
+        #
+        # because the origin is top-left, lats is backwards to the order we
+        # can search in
+
+        lats = np.flipud(self.lats)
+        lons = self.lons
+
+        if not lats[0] <= lat <= lats[-1]:
+            raise OutOfBounds("Latitude {} not in range [{}, {}]".format(
+                lat, lats[0], lats[-1]))
+        elif not lons[0] <= lon <= lons[-1]:
+            raise OutOfBounds("Longitude {} not in range [{}, {}]".format(
+                lon, lons[0], lons[-1]))
+
+
+        r = np.searchsorted(lats, lat)
+        c = np.searchsorted(lons, lon)
+
+        # flip the data to match the latitudes
+        return np.flipud(self)[r, c]
+
+    def extract_track(self, track):
+        """
+        Extracts the elevation data for a track.
+        """
+
+        pass

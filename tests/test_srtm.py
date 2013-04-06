@@ -92,3 +92,38 @@ def test_against_google(grid):
     ax1.set_ylim(-20, 200)
 
     plt.show()
+
+@pytest.mark.parametrize(('lat', 'lon'), [
+    (-37.81361, 144.96306), # Melbourne
+    (-37.868, 144.83), # Altona
+    (-37.767, 144.960), # Brunswick
+])
+def test_extract_point(grid, lat, lon):
+    import json
+    from rk import Client
+
+    calc = grid.extract_point(lat, lon)
+
+    # make a request to the Google Elevation API
+    client = Client()
+
+    _, content = client.request(
+        'http://maps.googleapis.com/maps/api/elevation/json',
+        data=dict(locations='{},{}'.format(lat, lon),
+                  sensor='false'))
+
+    content = json.loads(content)
+
+    assert content['status'] == 'OK'
+    assert 'results' in content
+    assert len(content['results']) == 1
+
+    result = content['results'][0]
+    desr = result['elevation']
+    res = result['resolution']
+
+    # assert the calculated value is within the resolution of Google's value
+    assert (desr - res / 2) <= calc <= (desr + res / 2)
+
+def test_extract_track(grid):
+    pass
