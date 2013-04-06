@@ -1,2 +1,4 @@
 .*.sw?
 *.pyc
+/3sSRTM_2008_DEM_ESRI_GRID_3sx3s_Mosaic/
+/tracks/
