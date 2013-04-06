@@ -49,19 +49,6 @@ class Client(Http):
                             headers=headers,
                             body=body)
 
-class HTTPRequestHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header('Content-Type', 'text/plain')
-        self.end_headers()
-
-        p = urlparse(self.path)
-        qs = parse_qs(p.query)
-
-        print >> self.wfile, "Thanks, you may close this window now"
-
-        self.server.code = qs['code'][0]
-
 class RK(object):
     def __init__(self):
 
@@ -72,30 +59,36 @@ class RK(object):
             'fitness_activities': 'FitnessActivityFeed',
         }
 
+    @property
+    def redirect_uri(self):
+        raise NotImplemented()
+
+    @property
+    def authorisation_url(self):
+        return AUTHORIZATION_URL + '?' + \
+               urlencode(dict(client_id=CLIENT_ID,
+                              response_type='code',
+                              redirect_uri=self.redirect_uri))
+
+    def setup(self):
+        pass
+
+    def redirect(self, auth_url):
+        raise NotImplemented()
+
     def authorize(self):
 
-        # start a web browser that we can use to collect the answer to the token
-        server_address = ('localhost', 0)
-        httpd = HTTPServer(server_address, HTTPRequestHandler)
+        self.setup()
 
-        redirect_uri = 'http://{server_name}:{server_port}/'.format(**httpd.__dict__)
-
-        # open a web browser to allow the user to accept the token
-        subprocess.check_call(['xdg-open',
-                               AUTHORIZATION_URL + '?' +
-                               urlencode(dict(client_id=CLIENT_ID,
-                                              response_type='code',
-                                              redirect_uri=redirect_uri))
-                              ])
-        httpd.handle_request()
+        code = self.redirect(self.authorisation_url)
 
         # now request an authorisation token
         resp, content = self.client.request(ACCESS_TOKEN_URL, method='POST',
                 data=dict(grant_type='authorization_code',
-                          code=httpd.code,
+                          code=code,
                           client_id=CLIENT_ID,
                           client_secret=CLIENT_SECRET,
-                          redirect_uri=redirect_uri))
+                          redirect_uri=self.redirect_uri))
 
         content = json.loads(content)
 
@@ -168,3 +161,36 @@ class RK(object):
         """
 
         return self._request(path, accepts=self.accepts['fitness_activity'])
+
+class HTTPRequestHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-Type', 'text/plain')
+        self.end_headers()
+
+        p = urlparse(self.path)
+        qs = parse_qs(p.query)
+
+        print >> self.wfile, "Thanks, you may close this window now"
+
+        self.server.code = qs['code'][0]
+
+class CommandLineClient(RK):
+    """
+    Implement RK client able to be used on the command line.
+    """
+
+    def setup(self):
+        server_address = ('localhost', 0)
+        self.httpd = HTTPServer(server_address, HTTPRequestHandler)
+
+    @property
+    def redirect_uri(self):
+        return 'http://{server_name}:{server_port}/'.format(**self.httpd.__dict__)
+
+    def redirect(self, auth_url):
+        # open a web browser to allow the user to accept the token
+        subprocess.check_call(['xdg-open', auth_url])
+        self.httpd.handle_request()
+
+        return self.httpd.code

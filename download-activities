@@ -18,7 +18,7 @@ import os
 import os.path
 import subprocess
 
-from rk import RK
+from rk import CommandLineClient as RK
 
 rk = RK()
 rk.authorize()
