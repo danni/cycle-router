@@ -20,16 +20,19 @@ from urllib import urlencode
 from urlparse import urlparse, parse_qs
 from tempfile import NamedTemporaryFile
 
-from httplib2 import Http
+from httplib2 import Http, ServerNotFoundError
 
 from keys import * # API keys: CLIENT_ID, CLIENT_SECRET
+
 
 API_URL = 'https://api.runkeeper.com'
 AUTHORIZATION_URL = 'https://runkeeper.com/apps/authorize'
 ACCESS_TOKEN_URL = 'https://runkeeper.com/apps/token'
 
+
 class AuthenticationException(Exception):
     pass
+
 
 class Client(Http):
     def request(self, uri, data={}, method='GET', headers={}, body=None):
@@ -50,9 +53,22 @@ class Client(Http):
                             body=body)
 
 class RK(object):
+    """
+    A class for talking to the RunKeeper health graph API.
+
+    Implement redirect_uri
+
+    The authentication flow then goes like this:
+    - direct the user to rk.authorisation_uri
+    - when you get the returned request path, call rk.extract_code(path)
+    - call rk.request_token()
+    """
+
     def __init__(self):
 
         self.client = Client()
+        self.code = None
+        self.token = None
         self.pages = None
         self.accepts = {
             'fitness_activity': 'FitnessActivity',
@@ -61,34 +77,58 @@ class RK(object):
 
     @property
     def redirect_uri(self):
+        """
+        The URI to redirect the user to to get an authorization code
+        """
+
         raise NotImplemented()
 
     @property
-    def authorisation_url(self):
+    def authorisation_uri(self):
+        """
+        The URI to visit for authorization
+        """
+
         return AUTHORIZATION_URL + '?' + \
                urlencode(dict(client_id=CLIENT_ID,
                               response_type='code',
                               redirect_uri=self.redirect_uri))
 
-    def setup(self):
-        pass
+    def extract_code(self, uri):
+        """
+        Extract the authorization code from the returned URL
+        """
 
-    def redirect(self, auth_url):
-        raise NotImplemented()
+        p = urlparse(uri)
+        qs = parse_qs(p.query)
 
-    def authorize(self):
+        try:
+            self.code = qs['code'][0]
+        except KeyError:
+            raise AuthenticationException("Code was not supplied")
 
-        self.setup()
+        return self.code
 
-        code = self.redirect(self.authorisation_url)
+    def request_token(self):
+        """
+        Request an authorization token. Assumes self.code must be set.
 
-        # now request an authorisation token
-        resp, content = self.client.request(ACCESS_TOKEN_URL, method='POST',
-                data=dict(grant_type='authorization_code',
-                          code=code,
-                          client_id=CLIENT_ID,
-                          client_secret=CLIENT_SECRET,
-                          redirect_uri=self.redirect_uri))
+        This method blocks.
+        """
+
+        if not self.code:
+            raise AuthenticationException(
+                "Need authorization code before session token")
+
+        try:
+            resp, content = self.client.request(ACCESS_TOKEN_URL, method='POST',
+                    data=dict(grant_type='authorization_code',
+                              code=self.code,
+                              client_id=CLIENT_ID,
+                              client_secret=CLIENT_SECRET,
+                              redirect_uri=self.redirect_uri))
+        except ServerNotFoundError:
+            raise AuthenticationException("Could not contact RunKeeper")
 
         content = json.loads(content)
 
@@ -100,6 +140,9 @@ class RK(object):
         return self.token
 
     def _request(self, path, accepts=None, **kwargs):
+
+        if not self.token:
+            raise AuthenticationException("You are not authenticated")
 
         if not accepts:
             accepts = path[1:].title()
@@ -162,35 +205,35 @@ class RK(object):
 
         return self._request(path, accepts=self.accepts['fitness_activity'])
 
+
 class HTTPRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.send_header('Content-Type', 'text/plain')
         self.end_headers()
 
-        p = urlparse(self.path)
-        qs = parse_qs(p.query)
+        self.server.path = self.path
 
         print >> self.wfile, "Thanks, you may close this window now"
 
-        self.server.code = qs['code'][0]
 
 class CommandLineClient(RK):
     """
     Implement RK client able to be used on the command line.
     """
 
-    def setup(self):
+    def authorize(self):
         server_address = ('localhost', 0)
         self.httpd = HTTPServer(server_address, HTTPRequestHandler)
 
-    @property
-    def redirect_uri(self):
-        return 'http://{server_name}:{server_port}/'.format(**self.httpd.__dict__)
-
-    def redirect(self, auth_url):
-        # open a web browser to allow the user to accept the token
-        subprocess.check_call(['xdg-open', auth_url])
+        # open a web browser for the user
+        subprocess.check_call(['xdg-open', self.authorisation_uri])
         self.httpd.handle_request()
 
-        return self.httpd.code
+        self.extract_code(self.httpd.path)
+        self.request_token()
+
+    @property
+    def redirect_uri(self):
+        return 'http://{server_name}:{server_port}/'.format(
+            **self.httpd.__dict__)
