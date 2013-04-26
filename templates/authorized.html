@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <a href="/">Home</a>
+  <a id="stop" class="btn btn-danger">Stop</a>
+  <div id="output">
+  </div>
+{% endblock %}
+
+{% block script %}
+  <script type="text/javascript" src="static/js/jquery.eventsource.js"></script>
+  <script type="text/javascript">
+$(document).ready(function () {
+  var output = $('#output');
+
+  function out(str) {
+    output.html(output.html() + str + '<br/>');
+  }
+
+  out("Connecting...");
+
+  $.eventsource({
+    label: 'connect',
+    dataType: 'json',
+    url: '/get-token' + window.location.search,
+    open: function (data) {
+      out("Carrier detected");
+    },
+    message: function (data) {
+      out(data.output);
+
+      if (data.state == 'complete' || data.state == 'failed') {
+        if (data.error) {
+          out(data.error);
+        }
+
+        out("Disconnected");
+        $('#stop').hide();
+        $.eventsource('close', 'connect');
+      }
+    },
+  });
+});
+
+$('#stop').click(function () {
+  $('#stop').hide();
+  $.eventsource('close', 'connect');
+});
+  </script>
+{% endblock %}

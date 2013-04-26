@@ -1,12 +1,30 @@
-<!DOCTYPE html>
+{% extends 'base.html' %}
 
-<html>
-  <head>
-    <title>Cycle Router</title>
-  </head>
+{% block content %}
+  <div class="jumbo">
+    <h1>Crowdsourced cycle maps</h1>
+    <p class="lead">
+      Every day lots of people are recording the rides on their GPSes
+      and uploading it to the web. Let's use this data to create crowd
+      sourced cycle maps for Melbourne (and other cities).
+    </p>
+  </div>
 
-  <body>
-    <a href="/authorize">Authorize</a>
-  </body>
-</html>
+  <hr/>
 
+  <div class="row-fluid">
+    <div class="span6">
+      <h2>How?</h2>
+    </div>
+    <div class="span6">
+      <h2>Why?</h2>
+    </div>
+  </div>
+
+  <h2>Let's go!</h2>
+  <div class="jumbo">
+    <a id="connect-rk" class="btn btn-large btn-success" href="/authorize">
+      Connect to RunKeeper
+    </a>
+  </div>
+{% endblock %}
