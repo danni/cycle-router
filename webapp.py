@@ -13,10 +13,9 @@
 #
 # Authors: Danielle Madeley <danielle@madeley.id.au>
 
-from urlparse import urlparse, urlunparse
-
 from flask import Flask, Response, \
-                  redirect, request, url_for, stream_with_context
+                  redirect, request, url_for, stream_with_context, \
+                  render_template
 from rk import RK
 
 
@@ -27,14 +26,7 @@ class FlaskRK(RK):
 
     @property
     def redirect_uri(self):
-        o = urlparse(request.url)
-
-        return urlunparse((o.scheme,
-                           o.netloc,
-                           url_for('authorize_next'),
-                           None,
-                           None,
-                           None))
+        return request.url_root + url_for('authorize_next')
 
 
 rk = FlaskRK()
@@ -45,7 +37,7 @@ def index():
     Pretty landing page.
     """
 
-    return '<a href="authorize">Authorize</a>'
+    return render_template('index.html')
 
 
 @app.route('/authorize')
@@ -79,11 +71,13 @@ def authorize_next():
             yield "done.\n"
 
             yield "Identify...\n"
-            yield str(rk.get_profile())
+            profile = rk.get_profile()
+            yield profile['name']
+            yield profile['normal_picture']
 
             yield "Downloading"
             for item in rk.get_fitness_items():
-                yield str(rk.get_fitness_item(item['uri']))
+                item = rk.get_fitness_item(item)
 
             yield "Transfer complete. Terminating connection."
         except Exception as e:

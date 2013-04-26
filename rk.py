@@ -198,10 +198,15 @@ class RK(object):
             r = self._request(r['next'],
                               accepts=self.accepts['fitness_activities'])
 
-    def get_fitness_item(self, path):
+    def get_fitness_item(self, item):
         """
         Returns a single fitness item
         """
+
+        try:
+            path = item['uri']
+        except AttributeError:
+            path = item
 
         return self._request(path, accepts=self.accepts['fitness_activity'])
 
