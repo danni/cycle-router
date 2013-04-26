@@ -2,8 +2,12 @@
 
 {% block content %}
   <a href="/">Home</a>
-  <a id="stop" class="btn btn-danger">Stop</a>
-  <div id="output">
+  <hr/>
+  <h1>Please wait while we transfer you!</h1>
+  <p>
+    If you've changed your mind, press <a href="/">Home</a>.
+  </p>
+  <div id="output" class="well clearfix">
   </div>
 {% endblock %}
 
@@ -14,10 +18,12 @@ $(document).ready(function () {
   var output = $('#output');
 
   function out(str) {
-    output.html(output.html() + str + '<br/>');
+    output.append(str + '<br/>');
   }
 
   out("Connecting...");
+
+  var progress = undefined;
 
   $.eventsource({
     label: 'connect',
@@ -27,24 +33,47 @@ $(document).ready(function () {
       out("Carrier detected");
     },
     message: function (data) {
-      out(data.output);
+      if (data.output) {
+        out(data.output);
+      }
 
-      if (data.state == 'complete' || data.state == 'failed') {
+      if (data.profile) {
+        var well = $('<div>', {
+          class: 'well clearfix'
+        }).appendTo(output);
+
+        well.append($('<img>', {
+          src: data.profile.normal_picture,
+          class: 'img-rounded pull-right'
+        }));
+        well.append($('<h2>', { text: data.profile.name }));
+        well.append($('<p>', {
+          text: data.nitems + " items to download."
+        }));
+      }
+
+      if (data.n) {
+        progress.width(100 * data.n / data.nitems + '%');
+      }
+
+      if (data.state == 'download') {
+        out("Downloading...");
+        progress = $('<div>', {
+          class: 'bar'
+        }).appendTo($('<div>', {
+          class: 'progress progress-striped active'
+        }).appendTo(output));
+      }
+      else if (data.state == 'complete' || data.state == 'failed') {
         if (data.error) {
           out(data.error);
         }
 
         out("Disconnected");
-        $('#stop').hide();
         $.eventsource('close', 'connect');
       }
     },
   });
-});
-
-$('#stop').click(function () {
-  $('#stop').hide();
-  $.eventsource('close', 'connect');
 });
   </script>
 {% endblock %}

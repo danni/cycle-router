@@ -78,18 +78,22 @@ def get_token():
 
         try:
             rk.extract_code(request.url)
+
             yield yield_json(output="Requesting session token...")
+
             rk.request_token()
 
-            yield yield_json(output="Identify")
-            profile = rk.get_profile()
-            yield yield_json(output=profile['name'])
-            yield yield_json(output=profile['normal_picture'])
+            yield yield_json(output="Accessing profile...")
 
-            yield yield_json(output="Downloading")
-            for item in rk.get_fitness_items():
+            profile = rk.get_profile()
+            items = list(rk.get_fitness_items())
+            nitems = len(items)
+
+            yield yield_json(profile=profile, nitems=nitems, state='download')
+
+            for n, item in enumerate(items):
                 item = rk.get_fitness_item(item)
-                yield yield_json(output='*')
+                yield yield_json(n=n, nitems=nitems)
 
             yield yield_json(
                 output="Transfer complete. Terminating connection",
