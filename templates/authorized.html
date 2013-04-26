@@ -68,11 +68,12 @@ $(document).ready(function () {
         if (data.error) {
           out(data.error);
         }
-
-        out("Disconnected");
         $.eventsource('close', 'connect');
       }
     },
+    close: function () {
+      out("Disconnected");
+    }
   });
 });
   </script>
