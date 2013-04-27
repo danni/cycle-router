@@ -29,10 +29,20 @@ def test_import_track():
 
     assert np.abs(data['total_distance'] - length) < 5
 
-    # length = session.scalar(track_obj.points.length_spheroid('SPHEROID["WGS 84",6378137,298.257223563]'))
 
-    # assert data['total_distance'] == length
+def test_extra_func_length_spheroid():
+    track = session.query(Track).filter_by(id=1).first()
 
+    filename = glob('tracks/*.json')[6]
+
+    with open(filename) as f:
+        data = json.load(f)
+
+    # FIXME: can we get the SPHEROID from the metadata?
+    length = session.scalar(track.points.length_spheroid(
+        'SPHEROID["WGS 84",6378137,298.257223563]'))
+
+    assert np.abs(data['total_distance'] - length) < 5
 
 def test_request_track():
     track = session.query(Track).filter_by(id=1).first()
