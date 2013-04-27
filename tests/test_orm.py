@@ -3,8 +3,7 @@ from glob import glob
 
 import numpy as np
 
-from track import RKJSON
-from orm import *
+from orm import Track, syncdb, session
 
 def test_create_db():
     syncdb()
@@ -15,19 +14,16 @@ def test_import_track():
 
     with open(filename) as f:
         data = json.load(f)
-        f.seek(0)
+        track = Track.from_rk_json(data)
 
-        track = RKJSON(f)
-        track_obj = Track.from_track(track)
+        npoints = session.scalar(track.points.num_points())
 
-    npoints = session.scalar(track_obj.points.num_points())
+        assert len(data['path']) == npoints
 
-    assert len(data['path']) == len(track) == npoints
+        # FIXME: how to determine the UTM zone automatically?
+        length = session.scalar(track.points.transform(32755).length())
 
-    # transform to UTM55S -- FIXME: can we do this on the spheroid
-    length = session.scalar(track_obj.points.transform(32755).length())
-
-    assert np.abs(data['total_distance'] - length) < 5
+        assert np.abs(data['total_distance'] - length) < 5
 
 
 def test_extra_func_length_spheroid():

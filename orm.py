@@ -71,18 +71,21 @@ class Track(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(String(128))
     track_id = Column(String(128))
-    points = GeometryColumn(LineString(3)) # FIXME t
+    points = GeometryColumn(LineString(4))
 
     @classmethod
-    def from_track(cls, track, commit=True):
-        # assert track.type == 'Cycling' and \
-        #        track.equipment == 'None'
+    def from_rk_json(cls, json, commit=True):
+        user_id = json['userID']
+        track_id = json['uri']
 
         points = 'LINESTRING({})'.format(','.join(
-            ('{} {} {}'.format(*a) for a in zip(track.lon, track.lat, track.elev))
+            ('{longitude} {latitude} {altitude} {timestamp}'.format(**p)
+             for p in json['path'])
             ))
 
-        obj = cls(points=WKTSpatialElement(points))
+        obj = cls(user_id=user_id,
+                  track_id=track_id,
+                  points=WKTSpatialElement(points))
 
         if commit:
             session.add(obj)
