@@ -170,6 +170,13 @@ class RKJSON(Track):
     def _parse(cls, fp):
         track = json.load(fp)
 
+        # for attr in ['userID',
+        #              'type',
+        #              'equipment',
+        #              'total_distance',
+        #              'uri']:
+        #     setattr(self, attr, track[attr])
+
         if 'path' not in track:
             raise BadInputException("No path in dataset")
 

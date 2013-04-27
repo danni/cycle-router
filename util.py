@@ -18,3 +18,16 @@ def monkeypatch(*args):
             setattr(cls, name, func)
 
     return inner
+
+
+def monkeypatchclass(cls):
+    """
+    Decorator to monkeypatch a class as a baseclass of @cls
+    """
+
+    def inner(basecls):
+        cls.__bases__ += (basecls,)
+
+        return basecls
+
+    return inner

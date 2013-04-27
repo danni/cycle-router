@@ -24,12 +24,11 @@ from sqlalchemy.ext.declarative import declarative_base
 
 from geoalchemy import GeometryColumn, LineString, GeometryDDL, \
                        WKTSpatialElement
-from geoalchemy.functions import BaseFunction
 from geoalchemy.dialect import DialectManager
-from geoalchemy.postgis import PGPersistentSpatialElement, \
-                               PGComparator
+from geoalchemy.functions import BaseFunction
+from geoalchemy.postgis import pg_functions
 
-from util import monkeypatch
+from util import monkeypatchclass
 
 
 engine = create_engine('postgresql://cyclerouter:bikes@localhost/cyclerouter')
@@ -49,22 +48,17 @@ def syncdb():
     metadata.create_all()
 
 
-class more_pg_functions(object):
+# monkeypatch in extra functions
+@monkeypatchclass(pg_functions)
+class more_pg_functions:
     class length_spheroid(BaseFunction):
         pass
 
-# monkeypatch in extra functions
+
 dialect = DialectManager.get_spatial_dialect(metadata.bind.dialect)
 dialect._get_function_mapping().update({
     more_pg_functions.length_spheroid: 'ST_Length_Spheroid',
 })
-
-@monkeypatch(PGPersistentSpatialElement, PGComparator)
-def __getattr__(self, name):
-    try:
-        return PGPersistentSpatialElement.__super____getattr__(self, name)
-    except AttributeError:
-        return getattr(more_pg_functions, name)(self)
 
 
 class Track(Base):
