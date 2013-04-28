@@ -77,6 +77,8 @@ def test_import_track():
 
     track = Track.from_rk_json(data)
 
+    assert session.query(Track).count() == 1
+
     npoints = session.scalar(track.points.num_points())
 
     assert len(data['path']) == npoints
@@ -85,6 +87,17 @@ def test_import_track():
     length = session.scalar(track.points.transform(32755).length())
 
     assert np.abs(data['total_distance'] - length) < 10 # within 10m
+
+
+def test_reimport_track():
+    filename = get_test_resource('json/97684385.json')
+
+    with open(filename) as f:
+        data = json.load(f)
+
+    track = Track.from_rk_json(data)
+
+    assert session.query(Track).count() == 1
 
 
 def test_extra_func_length_spheroid():

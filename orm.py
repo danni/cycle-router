@@ -20,7 +20,7 @@ Model definitions for an SQLAlchemy ORM
 from datetime import datetime
 
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, \
-                       MetaData, create_engine
+                       MetaData, create_engine, and_
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.ext.declarative import declarative_base
@@ -166,15 +166,27 @@ class Track(Base):
             ('{longitude} {latitude} {altitude} {timestamp}'.format(**p)
              for p in json['path'])
             ))
+        points = WKTSpatialElement(points)
 
-        obj = cls(user_id=user_id,
-                  track_id=track_id,
-                  points=WKTSpatialElement(points))
+        # look to see if we already have this user
+        try:
+            obj = Track.get_track(user_id, track_id)
+            obj.points=points
+        except NoResultFound:
+            obj = cls(user_id=user_id,
+                      track_id=track_id,
+                      points=points)
 
         if commit:
             session.add(obj)
             session.commit()
 
         return obj
+
+    @classmethod
+    def get_track(self, user_id, track_id):
+        return session.query(Track).join(User).filter(and_(
+            User.user_id == user_id,
+            Track.track_id == track_id)).one()
 
 GeometryDDL(Track.__table__)
