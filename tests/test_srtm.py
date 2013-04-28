@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import pytest
 from matplotlib import pyplot as plt
@@ -6,6 +8,11 @@ from numpy.testing import assert_almost_equal, assert_allclose
 from srtm import SRTM
 
 from tests.test_json import json as track_json
+
+
+NO_PLOTS = not (os.environ.get('PLOTS', 'no') == 'yes')
+NO_NET = not (os.environ.get('NET', 'no') == 'yes')
+
 
 @pytest.fixture(scope='module')
 def grid():
@@ -16,6 +23,7 @@ def track(track_json):
     from track import RKJSON
 
     return RKJSON(track_json)
+
 
 def test_load_srtm(grid):
     # assert grid makes sense shapewise
@@ -44,6 +52,8 @@ def test_load_srtm(grid):
     assert grid.lats[0] >= -37.767 >= grid.lats[-1] and \
            grid.lons[0] <= 144.960 <= grid.lons[-1]
 
+
+@pytest.mark.skipif('NO_PLOTS')
 def test_plot_srtm(grid):
 
     fig, (ax1, ax2) = plt.subplots(2, 1)
@@ -58,6 +68,9 @@ def test_plot_srtm(grid):
 
     plt.show()
 
+
+@pytest.mark.skipif('NO_NET')
+@pytest.mark.skipif('NO_PLOTS')
 def test_against_google(grid):
 
     import json
@@ -101,6 +114,8 @@ def test_against_google(grid):
 
     plt.show()
 
+
+@pytest.mark.skipif('NO_NET')
 @pytest.mark.parametrize(('lat', 'lon'), [
     (-37.81361, 144.96306), # Melbourne
     (-37.868, 144.83), # Altona
@@ -133,6 +148,8 @@ def test_extract_point(grid, lat, lon):
     # assert the calculated value is within the resolution of Google's value
     assert_allclose(calc, desr, atol=res / 2)
 
+
+@pytest.mark.skipif('NO_PLOTS')
 def test_extract_track_against_rk(grid, track):
     elevs = grid.extract_track(track)
 

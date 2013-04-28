@@ -1,4 +1,7 @@
+import os
 from glob import glob
+
+import pytest
 
 import numpy as np
 import scipy as sp
@@ -8,8 +11,13 @@ from matplotlib import pyplot as plt
 from track import RKJSON, BadInputException
 from binning import Grid, MELBOURNE, Direction
 
+
+NO_PLOTS = not (os.environ.get('PLOTS', 'no') == 'yes')
+
+
+@pytest.mark.skipif('NO_PLOTS')
 def test_bin_direction():
-    filename = glob('tracks/*.json')[4]
+    filename = glob('json/*.json')[4]
 
     with open(filename) as f:
         track = RKJSON(f)
@@ -37,6 +45,8 @@ def test_bin_direction():
 
         plt.show()
 
+
+@pytest.mark.skipif('NO_PLOTS')
 def test_binning_one():
     filename = glob('tracks/*.json')[0]
 
@@ -58,6 +68,8 @@ def test_binning_one():
 
         plt.show()
 
+
+@pytest.mark.skipif('NO_PLOTS')
 def test_binning_all():
 
     def generate_tracks():
@@ -107,6 +119,8 @@ def test_binning_all():
 
     plt.show()
 
+
+@pytest.mark.skipif('NO_PLOTS')
 def test_binning_inverted_relationship():
 
     def generate_tracks():

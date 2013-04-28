@@ -1,4 +1,4 @@
-
+import os
 from glob import glob
 
 import pytest
@@ -9,15 +9,21 @@ from mpl_toolkits.basemap import Basemap
 from track import RKJSON, smooth, BadInputException
 from binning import Grid
 
+
+NO_PLOTS = not (os.environ.get('PLOTS', 'no') == 'yes')
+
+
 @pytest.fixture
 def json(request):
-    filename = glob('tracks/*.json')[1]
+    filename = glob('json/*.json')[1]
 
     fp = open(filename, 'rb')
     request.addfinalizer(fp.close)
 
     return fp
 
+
+@pytest.mark.skipif('NO_PLOTS')
 def test_point_scatter(json):
     track = RKJSON(json)
 
@@ -29,6 +35,8 @@ def test_point_scatter(json):
 
     plt.show()
 
+
+@pytest.mark.skipif('NO_PLOTS')
 def test_plots(json):
     track = RKJSON(json)
 
@@ -48,6 +56,8 @@ def test_plots(json):
     fig.autofmt_xdate()
     plt.show()
 
+
+@pytest.mark.skipif('NO_PLOTS')
 def test_plot_map_vels(json):
     track = RKJSON(json)
     vels = track.calculate_vels()
@@ -74,6 +84,8 @@ def test_plot_map_vels(json):
     m.barbs(x, y, vels.u, vels.v) #, vels.anom, cmap=plt.get_cmap('RdBu_r'))
     plt.show()
 
+
+@pytest.mark.skipif('NO_PLOTS')
 def test_plot_all_map_vels():
     def gen_tracks():
         for fn in glob('tracks/*.json'):

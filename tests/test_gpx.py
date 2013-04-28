@@ -1,4 +1,5 @@
 from math import *
+import os
 import os.path
 
 import pytest
@@ -8,9 +9,13 @@ from mpl_toolkits.basemap import Basemap
 
 from track import GPX, smooth
 
+
+NO_PLOTS = not (os.environ.get('PLOTS', 'no') == 'yes')
+
+
 @pytest.fixture(params=[
-    'RK_gpx _2012-12-16_1734.gpx',
-    'RK_gpx _2012-12-18_2012.gpx',
+    'gpx/RK_gpx _2012-12-16_1734.gpx',
+    'gpx/RK_gpx _2012-12-18_2012.gpx',
 ])
 def xml(request):
     filename = os.path.join(os.path.dirname(__file__),
@@ -21,11 +26,14 @@ def xml(request):
 
     return fp
 
+
 def test_import(xml):
     track = GPX(xml)
 
-    # assert len(track) == 413
+    assert track is not None
 
+
+@pytest.mark.skipif('NO_PLOTS')
 def test_plot_elevation(xml):
     track = GPX(xml)
 
@@ -36,6 +44,8 @@ def test_plot_elevation(xml):
     fig.autofmt_xdate()
     plt.show()
 
+
+@pytest.mark.skipif('NO_PLOTS')
 def test_plot_speeds(xml):
     track = GPX(xml)
 
@@ -56,6 +66,8 @@ def test_plot_speeds(xml):
     fig.autofmt_xdate()
     plt.show()
 
+
+@pytest.mark.skipif('NO_PLOTS')
 def test_plot_anom(xml):
 
     track = GPX(xml)
@@ -68,6 +80,8 @@ def test_plot_anom(xml):
     fig.autofmt_xdate()
     plt.show()
 
+
+@pytest.mark.skipif('NO_PLOTS')
 def test_plot_map_vels(xml):
     track = GPX(xml)
     vels = track.calculate_vels(smooth_vels=True)
