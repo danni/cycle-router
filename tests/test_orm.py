@@ -119,3 +119,12 @@ def test_request_track():
     track = session.query(Track).filter_by(id=1).first()
 
     assert track
+
+
+def test_cascade():
+    track = session.query(Track).get(1)
+    session.delete(track.user)
+    session.commit()
+
+    assert session.query(User).count() == 2
+    assert session.query(Track).count() == 0

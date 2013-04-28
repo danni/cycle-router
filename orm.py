@@ -89,6 +89,8 @@ class User(Base):
     service = Column(String(128), default='RunKeeper')
     token = Column(String(128))
 
+    tracks = relationship('Track', cascade="all, delete, delete-orphan")
+
     @classmethod
     def from_rk(cls, rk, commit=True):
         """
