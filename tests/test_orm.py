@@ -13,7 +13,7 @@ def test_import_user():
     class FakeRk(object):
         def get_user(self):
             return {
-                'userID': 'badger',
+                'userID': 1,
             }
 
         token = 'TOKEN'
@@ -23,13 +23,13 @@ def test_import_user():
     assert obj
 
     assert session.query(User).count() == 1
-    assert obj.user_id == 'badger'
+    assert obj.user_id == 1
     assert obj.token == 'TOKEN'
 
     class FakeRk(object):
         def get_user(self):
             return {
-                'userID': 'badger',
+                'userID': 1,
             }
 
         token = 'TOKEN2'
@@ -37,13 +37,13 @@ def test_import_user():
     obj = User.from_rk(FakeRk())
 
     assert session.query(User).count() == 1
-    assert obj.user_id == 'badger'
+    assert obj.user_id == 1
     assert obj.token == 'TOKEN2'
 
     class FakeRk(object):
         def get_user(self):
             return {
-                'userID': 'snake',
+                'userID': 2,
             }
 
         token = 'TOKEN3'
@@ -51,12 +51,12 @@ def test_import_user():
     obj = User.from_rk(FakeRk())
 
     assert session.query(User).count() == 2
-    assert obj.user_id == 'snake'
+    assert obj.user_id == 2
     assert obj.token == 'TOKEN3'
 
 
 def test_api_obj_from_user():
-    obj = session.query(User).filter(User.user_id == 'badger').one()
+    obj = session.query(User).filter(User.user_id == 1).one()
 
     assert obj
 
@@ -70,6 +70,10 @@ def test_import_track():
 
     with open(filename) as f:
         data = json.load(f)
+
+    # we need to insert this user_id into the database
+    session.add(User(user_id=data['userID']))
+    session.commit()
 
     track = Track.from_rk_json(data)
 

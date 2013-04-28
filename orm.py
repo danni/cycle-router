@@ -19,9 +19,9 @@ Model definitions for an SQLAlchemy ORM
 
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, DateTime, \
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, \
                        MetaData, create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -83,8 +83,10 @@ class User(Base):
     __tablename__ = 'users'
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(String(128)) # FIXME -- can this be a integer primary key?
+    # the RunKeeper user_id
+    user_id = Column(Integer, unique=True, nullable=False)
     updated = Column(DateTime, default=datetime.now)
+    service = Column(String(128), default='RunKeeper')
     token = Column(String(128))
 
     @classmethod
@@ -102,7 +104,7 @@ class User(Base):
 
         # look to see if we already have this user
         try:
-            obj = session.query(User).filter(User.user_id == user_id).one()
+            obj = User.get_user(user_id)
             obj.token = rk.token
         except NoResultFound:
             obj = cls(user_id=user_id,
@@ -113,6 +115,10 @@ class User(Base):
             session.commit()
 
         return obj
+
+    @classmethod
+    def get_user(cls, user_id):
+        return session.query(cls).filter(cls.user_id == user_id).one()
 
     def to_rk(self):
         """
@@ -130,10 +136,26 @@ class Track(Base):
     __tablename__ = 'tracks'
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(String(128))
+    user_pk = Column(Integer, ForeignKey('users.id'))
     track_id = Column(String(128))
     updated = Column(DateTime, default=datetime.now)
     points = GeometryColumn(LineString(4))
+
+    user = relationship('User')
+
+    def __init__(self, *args, **kwargs):
+        """
+        Turn user_id into a User model
+        """
+
+        if 'user_id' in kwargs:
+            user_id = kwargs.pop('user_id')
+            user = User.get_user(user_id)
+
+            kwargs['user'] = user
+
+        super(Track, self).__init__(*args, **kwargs)
+
 
     @classmethod
     def from_rk_json(cls, json, commit=True):
