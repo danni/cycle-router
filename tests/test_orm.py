@@ -100,6 +100,16 @@ def test_reimport_track():
     assert session.query(Track).count() == 1
 
 
+def test_backref():
+    user = User.get_user('11271062')
+
+    assert len(user.tracks) == 1
+
+    track = user.tracks[0]
+
+    assert track.track_id == '/fitnessActivities/97684385'
+
+
 def test_extra_func_length_spheroid():
     track = session.query(Track).filter_by(id=1).first()
 
