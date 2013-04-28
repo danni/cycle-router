@@ -17,7 +17,9 @@
 Model definitions for an SQLAlchemy ORM
 """
 
-from sqlalchemy import Column, Integer, String, \
+from datetime import datetime
+
+from sqlalchemy import Column, Integer, String, DateTime, \
                        MetaData, create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
@@ -71,6 +73,37 @@ def get_function(self, function_cls):
         return self.__super__get_function(function_cls)
 
 
+class User(Base):
+    """
+    Represents a user we've connected with.
+    """
+
+    __tablename__ = 'users'
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(String(128)) # FIXME -- can this be a integer primary key?
+    updated = Column(DateTime, default=datetime.now)
+    token = Column(String(128))
+
+    @classmethod
+    def from_rk(cls, rk, commit=True):
+        assert rk.token
+
+        json = rk.get_user()
+
+        user_id = json['userID']
+        token = rk.token
+
+        obj = cls(user_id=user_id,
+                  token=token)
+
+        if commit:
+            session.add(obj)
+            session.commit()
+
+        return obj
+
+
 class Track(Base):
     """
     Represents a Track in a PostGIS database.
@@ -81,6 +114,7 @@ class Track(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(String(128))
     track_id = Column(String(128))
+    updated = Column(DateTime, default=datetime.now)
     points = GeometryColumn(LineString(4))
 
     @classmethod

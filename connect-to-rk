@@ -19,25 +19,8 @@ import os.path
 import subprocess
 
 from rk import CommandLineClient as RK
+from orm import User
 
 rk = RK()
 rk.authorize()
-
-try:
-    os.mkdir('tracks')
-except OSError:
-    pass
-
-for item in rk.get_fitness_items():
-    if item['type'] != 'Cycling':
-        continue
-
-    filename = os.path.join('tracks', item['uri'].split('/')[-1] + '.json')
-
-    if os.path.exists(filename):
-        continue
-
-    with open(filename, 'w') as f:
-        print "Downloading {}...".format(filename)
-        resp = rk.get_fitness_item(item['uri'])
-        json.dump(resp, f, indent=2)
+User.from_rk(rk)

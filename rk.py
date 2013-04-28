@@ -64,11 +64,11 @@ class RK(object):
     - call rk.request_token()
     """
 
-    def __init__(self):
+    def __init__(self, token=None):
 
         self.client = Client()
         self.code = None
-        self.token = None
+        self.token = token
         self.pages = None
         self.accepts = {
             'fitness_activity': 'FitnessActivity',
@@ -203,10 +203,10 @@ class RK(object):
         Returns a single fitness item
         """
 
-        try:
-            path = item['uri']
-        except AttributeError:
+        if isinstance(item, basestring):
             path = item
+        else:
+            path = item['uri']
 
         return self._request(path, accepts=self.accepts['fitness_activity'])
 
