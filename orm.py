@@ -22,6 +22,7 @@ from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, \
                        MetaData, create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.ext.declarative import declarative_base
 
 from geoalchemy import GeometryColumn, LineString, GeometryDDL, \
@@ -87,6 +88,10 @@ class User(Base):
 
     @classmethod
     def from_rk(cls, rk, commit=True):
+        """
+        CREATE or UPDATE a user object from an RK API object
+        """
+
         assert rk.token
 
         json = rk.get_user()
@@ -94,8 +99,13 @@ class User(Base):
         user_id = json['userID']
         token = rk.token
 
-        obj = cls(user_id=user_id,
-                  token=token)
+        # look to see if we already have this user
+        try:
+            obj = session.query(User).filter(User.user_id == user_id).one()
+            obj.token = rk.token
+        except NoResultFound:
+            obj = cls(user_id=user_id,
+                      token=token)
 
         if commit:
             session.add(obj)

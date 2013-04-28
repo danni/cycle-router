@@ -3,11 +3,57 @@ from glob import glob
 
 import numpy as np
 
-from orm import Track, syncdb, session
+from orm import User, Track, syncdb, session
 from tests.util import get_test_resource
 
 def test_create_db():
     syncdb()
+
+
+def test_import_user():
+    class FakeRk(object):
+        def get_user(self):
+            return {
+                'userID': 'badger',
+            }
+
+        token = 'TOKEN'
+
+    obj = User.from_rk(FakeRk())
+
+    assert obj
+
+    assert session.query(User).count() == 1
+    assert obj.user_id == 'badger'
+    assert obj.token == 'TOKEN'
+
+    class FakeRk(object):
+        def get_user(self):
+            return {
+                'userID': 'badger',
+            }
+
+        token = 'TOKEN2'
+
+    obj = User.from_rk(FakeRk())
+
+    assert session.query(User).count() == 1
+    assert obj.user_id == 'badger'
+    assert obj.token == 'TOKEN2'
+
+    class FakeRk(object):
+        def get_user(self):
+            return {
+                'userID': 'snake',
+            }
+
+        token = 'TOKEN3'
+
+    obj = User.from_rk(FakeRk())
+
+    assert session.query(User).count() == 2
+    assert obj.user_id == 'snake'
+    assert obj.token == 'TOKEN3'
 
 
 def test_import_track():
