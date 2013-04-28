@@ -31,6 +31,7 @@ from geoalchemy.functions import BaseFunction
 from geoalchemy.dialect import SpatialDialect
 from geoalchemy.postgis import pg_functions
 
+from rk import RK
 from util import monkeypatch, monkeypatchclass
 
 
@@ -112,6 +113,13 @@ class User(Base):
             session.commit()
 
         return obj
+
+    def to_rk(self):
+        """
+        Return an RK API object from a User
+        """
+
+        return RK(token=self.token)
 
 
 class Track(Base):

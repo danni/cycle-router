@@ -56,6 +56,16 @@ def test_import_user():
     assert obj.token == 'TOKEN3'
 
 
+def test_api_obj_from_user():
+    obj = session.query(User).filter(User.user_id == 'badger').one()
+
+    assert obj
+
+    rk = obj.to_rk()
+
+    assert rk.token == 'TOKEN2'
+
+
 def test_import_track():
     filename = glob(get_test_resource('json/*.json'))[6]
 
