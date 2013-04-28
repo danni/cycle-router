@@ -1,5 +1,4 @@
 import json
-from glob import glob
 
 import numpy as np
 
@@ -67,7 +66,7 @@ def test_api_obj_from_user():
 
 
 def test_import_track():
-    filename = glob(get_test_resource('json/*.json'))[6]
+    filename = get_test_resource('json/97684385.json')
 
     with open(filename) as f:
         data = json.load(f)
@@ -81,13 +80,13 @@ def test_import_track():
     # FIXME: how to determine the UTM zone automatically?
     length = session.scalar(track.points.transform(32755).length())
 
-    assert np.abs(data['total_distance'] - length) < 5
+    assert np.abs(data['total_distance'] - length) < 10 # within 10m
 
 
 def test_extra_func_length_spheroid():
     track = session.query(Track).filter_by(id=1).first()
 
-    filename = glob(get_test_resource('json/*.json'))[6]
+    filename = get_test_resource('json/97684385.json')
 
     with open(filename) as f:
         data = json.load(f)
@@ -96,7 +95,7 @@ def test_extra_func_length_spheroid():
     length = session.scalar(track.points.length_spheroid(
         'SPHEROID["WGS 84",6378137,298.257223563]'))
 
-    assert np.abs(data['total_distance'] - length) < 5
+    assert np.abs(data['total_distance'] - length) < 10 # within 10m
 
 
 def test_request_track():
