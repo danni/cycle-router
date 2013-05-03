@@ -85,8 +85,8 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     # the RunKeeper user_id
     user_id = Column(Integer, unique=True, nullable=False)
-    updated = Column(DateTime, default=datetime.now)
-    service = Column(String(128), default='RunKeeper')
+    updated = Column(DateTime, default=datetime.now, nullable=False)
+    service = Column(String(128), default='RunKeeper', nullable=False)
     token = Column(String(128))
 
     tracks = relationship('Track', cascade="all, delete, delete-orphan")
@@ -138,10 +138,11 @@ class Track(Base):
     __tablename__ = 'tracks'
 
     id = Column(Integer, primary_key=True)
-    user_pk = Column(Integer, ForeignKey('users.id'))
-    track_id = Column(String(128))
-    updated = Column(DateTime, default=datetime.now)
-    points = GeometryColumn(LineString(4))
+    user_pk = Column(Integer, ForeignKey('users.id'), nullable=False)
+    track_id = Column(String(128), nullable=False)
+    date = Column(DateTime, nullable=False)
+    updated = Column(DateTime, default=datetime.now, nullable=False)
+    points = GeometryColumn(LineString(4), nullable=False)
 
     user = relationship('User')
 
@@ -163,6 +164,9 @@ class Track(Base):
     def from_rk_json(cls, json, commit=True):
         user_id = json['userID']
         track_id = json['uri']
+        # FIXME: timezone? does RK care?
+        activity_date = datetime.strptime(json['start_time'],
+                                          '%a, %d %b %Y %H:%M:%S')
 
         points = 'LINESTRING({})'.format(','.join(
             ('{longitude} {latitude} {altitude} {timestamp}'.format(**p)
@@ -170,13 +174,14 @@ class Track(Base):
             ))
         points = WKTSpatialElement(points)
 
-        # look to see if we already have this user
+        # look to see if we already have this track
         try:
             obj = Track.get_track(user_id, track_id)
             obj.points=points
         except NoResultFound:
             obj = cls(user_id=user_id,
                       track_id=track_id,
+                      date=activity_date,
                       points=points)
 
         if commit:
