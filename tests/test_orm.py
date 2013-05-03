@@ -21,7 +21,9 @@ def test_import_user():
     obj = User.from_rk(FakeRk())
 
     assert obj
+
     updated = obj.updated
+    created = obj.created
 
     assert session.query(User).count() == 1
     assert obj.user_id == 1
@@ -41,6 +43,7 @@ def test_import_user():
     assert obj.user_id == 1
     assert obj.token == 'TOKEN2'
     assert obj.updated > updated
+    assert obj.created == created
 
     class FakeRk(object):
         def get_user(self):

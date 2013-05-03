@@ -85,6 +85,7 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     # the RunKeeper user_id
     user_id = Column(Integer, unique=True, nullable=False)
+    created = Column(DateTime, nullable=False, default=datetime.now)
     updated = Column(DateTime, nullable=False,
                      default=datetime.now, onupdate=datetime.now)
     service = Column(String(128), default='RunKeeper', nullable=False)
