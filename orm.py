@@ -85,7 +85,8 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     # the RunKeeper user_id
     user_id = Column(Integer, unique=True, nullable=False)
-    updated = Column(DateTime, default=datetime.now, nullable=False)
+    updated = Column(DateTime, nullable=False,
+                     default=datetime.now, onupdate=datetime.now)
     service = Column(String(128), default='RunKeeper', nullable=False)
     token = Column(String(128))
 
@@ -141,7 +142,8 @@ class Track(Base):
     user_pk = Column(Integer, ForeignKey('users.id'), nullable=False)
     track_id = Column(String(128), nullable=False)
     date = Column(DateTime, nullable=False)
-    updated = Column(DateTime, default=datetime.now, nullable=False)
+    updated = Column(DateTime, nullable=False,
+                     default=datetime.now, onupdate=datetime.now)
     points = GeometryColumn(LineString(4), nullable=False)
 
     user = relationship('User')
@@ -177,7 +179,7 @@ class Track(Base):
         # look to see if we already have this track
         try:
             obj = Track.get_track(user_id, track_id)
-            obj.points=points
+            obj.points = points
         except NoResultFound:
             obj = cls(user_id=user_id,
                       track_id=track_id,

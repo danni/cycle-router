@@ -21,6 +21,7 @@ def test_import_user():
     obj = User.from_rk(FakeRk())
 
     assert obj
+    updated = obj.updated
 
     assert session.query(User).count() == 1
     assert obj.user_id == 1
@@ -39,6 +40,7 @@ def test_import_user():
     assert session.query(User).count() == 1
     assert obj.user_id == 1
     assert obj.token == 'TOKEN2'
+    assert obj.updated > updated
 
     class FakeRk(object):
         def get_user(self):
@@ -90,6 +92,8 @@ def test_import_track():
 
 
 def test_reimport_track():
+    updated = session.query(Track).one().updated
+
     filename = get_test_resource('json/97684385.json')
 
     with open(filename) as f:
@@ -98,6 +102,7 @@ def test_reimport_track():
     track = Track.from_rk_json(data)
 
     assert session.query(Track).count() == 1
+    assert track.updated > updated
 
 
 def test_backref():
