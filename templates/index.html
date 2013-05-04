@@ -14,7 +14,7 @@
       and uploading it to the web. Let's use this data to create crowd
       sourced cycle maps for Melbourne (and other cities).
     </p>
-    <p>
+    <p class="muted">
     {{ nusers }} contributors.
     {{ '%.1f'|format(nkms) }} kilometers.
     </p>
@@ -25,16 +25,71 @@
   <div class="row-fluid">
     <div class="span6">
       <h2>How?</h2>
+      <p>
+        By clicking the button below we will take you to RunKeeper and ask
+        you to authorize Cycle Router. This will then add you to our database
+        to periodically synchronise your cycling data and add it to our
+        database.
+      </p>
+      <p>
+        We will then count the number of people cycling at a location against
+        data from Open Streetmap. We will also consider velocity and time to
+        try and work out what time what routes are best. This part is very
+        much a work in progress, and requires more data before it can be
+        useful.
+      </p>
+      <h2>Let's go!</h2>
+      <div class="jumbo">
+        <a id="connect-rk" class="btn btn-large btn-success" href="/authorize">
+          Connect to RunKeeper
+        </a>
+      </div>
     </div>
     <div class="span6">
       <h2>Why?</h2>
+      <p>
+        Because there should be better cycling maps.
+      </p>
+      <h2>What about privacy?</h2>
+      <p>
+        A record of your RunKeeper account, and a complete set of your
+        tracks will be stored in our database. The database does not
+        contain any personal details, but someone could use your user id to
+        look at anything on your profile. Because your tracks will frequently
+        start or end at your home, school or workplace, we are going to strip
+        that data out the maps we generate, but it is in the database.
+      </p>
+      <p>
+        If you wish to revoke our access you can do so from the
+        <a href="http://runkeeper.com/settings/apps">RunKeeper apps page</a>.
+        Doing this will not remove you from our database. If you want to
+        do so, you should wait until Danni implements it.
+      </p>
     </div>
   </div>
-
-  <h2>Let's go!</h2>
-  <div class="jumbo">
-    <a id="connect-rk" class="btn btn-large btn-success" href="/authorize">
-      Connect to RunKeeper
-    </a>
+  <hr/>
+  <div class="row-fluid">
+    <div class="span6">
+      <h2>What about Strava?</h2>
+      <p>
+        I am open to adding other cycle tracking services, e.g. Strava.
+        The only requirement is they have an API we can access data from
+        (currently Strava does not).
+      </p>
+    </div>
+    <div class="span6">
+      <h2>Who did this?</h2>
+      <p>
+        This software is written by
+        <a href="http://blogs.gnome.org/danni/">Danielle Madeley</a>, a keen
+        Melbourne cyclist and software developer.
+      </p>
+    </div>
   </div>
+  <hr/>
+  <p class="text-center muted">
+    &copy; 2013 Danielle Madeley
+    &lt;<a href="mailto:danielle@madeley.id.au">danielle@madeley.id.au</a>&gt;
+  </p>
+
 {% endblock %}
