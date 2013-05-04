@@ -85,9 +85,9 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     # the RunKeeper user_id
     user_id = Column(Integer, unique=True, nullable=False)
-    created = Column(DateTime, nullable=False, default=datetime.now)
+    created = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated = Column(DateTime, nullable=False,
-                     default=datetime.now, onupdate=datetime.now)
+                     default=datetime.utcnow, onupdate=datetime.utcnow)
     service = Column(String(128), default='RunKeeper', nullable=False)
     token = Column(String(128))
 
@@ -144,7 +144,7 @@ class Track(Base):
     track_id = Column(String(128), nullable=False)
     date = Column(DateTime, nullable=False)
     updated = Column(DateTime, nullable=False,
-                     default=datetime.now, onupdate=datetime.now)
+                     default=datetime.utcnow, onupdate=datetime.utcnow)
     points = GeometryColumn(LineString(4), nullable=False)
 
     user = relationship('User')
@@ -194,7 +194,12 @@ class Track(Base):
         return obj
 
     @classmethod
-    def get_track(self, user_id, track_id):
+    def get_track(self, user, track_id):
+        if isinstance(user, User):
+            user_id = user.user_id
+        else:
+            user_id = user
+
         return session.query(Track).join(User).filter(and_(
             User.user_id == user_id,
             Track.track_id == track_id)).one()

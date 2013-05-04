@@ -34,6 +34,26 @@ class AuthenticationException(Exception):
     pass
 
 
+class HttpException(Exception):
+    def __init__(self, headers):
+        self.headers = headers
+
+    def __repr__(self):
+        return '{} ({})'.format(self.__class__.__name__, self.headers.status)
+
+
+class NotModified(HttpException):
+    pass
+
+
+class PermissionDenied(HttpException):
+    pass
+
+
+class FileNotFound(HttpException):
+    pass
+
+
 class Client(Http):
     def request(self, uri, data={}, method='GET', headers={}, body=None):
 
@@ -152,10 +172,24 @@ class RK(object):
             'Accept': 'application/vnd.com.runkeeper.{}+json'.format(accepts),
         }
 
-        headers.update(kwargs.get('headers', {}))
+        headers.update(kwargs.pop('headers', {}))
 
-        _, content = self.client.request(API_URL + path, headers=headers,
-                                         **kwargs)
+        resp, content = self.client.request(API_URL + path, headers=headers,
+                                            **kwargs)
+
+        exceptions = {
+            '304': NotModified,
+            '403': PermissionDenied,
+            '404': FileNotFound,
+        }
+
+        status = resp['status']
+
+        if status in exceptions:
+            raise exceptions[status](resp)
+        elif status != '200':
+            raise HttpException(resp)
+
         content = json.loads(content)
 
         return content
@@ -198,9 +232,11 @@ class RK(object):
             r = self._request(r['next'],
                               accepts=self.accepts['fitness_activities'])
 
-    def get_fitness_item(self, item):
+    def get_fitness_item(self, item, if_modified_since=None):
         """
         Returns a single fitness item
+
+        if_modified_since assumes GMT
         """
 
         if isinstance(item, basestring):
@@ -208,7 +244,14 @@ class RK(object):
         else:
             path = item['uri']
 
-        return self._request(path, accepts=self.accepts['fitness_activity'])
+        headers = {}
+
+        if if_modified_since is not None:
+            headers['If-Modified-Since'] = \
+                if_modified_since.strftime('%a, %d %b %Y %H:%M:%S GMT')
+
+        return self._request(path, accepts=self.accepts['fitness_activity'],
+                             headers=headers)
 
 
 class HTTPRequestHandler(BaseHTTPRequestHandler):

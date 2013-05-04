@@ -16,7 +16,7 @@
 import json
 
 from orm import User, Track, session
-from rk import RK
+from rk import RK, NotModified
 
 
 for user in session.query(User).all():
@@ -28,9 +28,25 @@ for user in session.query(User).all():
         if item['type'] != 'Cycling':
             continue
 
-        print "  {}...".format(item['uri'])
+        track_id = item['uri']
 
-        json = rk.get_fitness_item(item)
+        print "  {}...".format(track_id),
+
+        try:
+            track = Track.get_track(user, track_id)
+            updated = track.updated
+            print "existing,",
+        except NoResultFound:
+            print "new"
+            updated = None
+
+        try:
+            json = rk.get_fitness_item(item, if_modified_since=updated)
+        except NotModified:
+            print "not modified"
+            continue
+
+        print "updated"
 
         if json['equipment'] != 'None':
             continue
