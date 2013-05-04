@@ -19,11 +19,9 @@ Model definitions for an SQLAlchemy ORM
 
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, \
-                       MetaData, create_engine, and_
-from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, and_
+from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.ext.declarative import declarative_base
 
 from geoalchemy import GeometryColumn, LineString, GeometryDDL, \
                        WKTSpatialElement
@@ -32,25 +30,11 @@ from geoalchemy.dialect import SpatialDialect
 from geoalchemy.postgis import pg_functions
 
 from rk import RK
+from db import Session
 from util import monkeypatch, monkeypatchclass
 
-
-engine = create_engine('postgresql://cyclerouter:bikes@localhost/cyclerouter')
-Session = sessionmaker(bind=engine)
-session = Session()
-
-metadata = MetaData(engine)
-Base = declarative_base(metadata=metadata)
-
-
-def syncdb():
-    """
-    Drop defined tables and recreate them.
-    """
-
-    metadata.drop_all()
-    metadata.create_all()
-
+Base = Session.Base
+session = Session.session
 
 # monkeypatch in extra functions
 @monkeypatchclass(pg_functions)

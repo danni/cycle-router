@@ -2,11 +2,17 @@ import json
 
 import numpy as np
 
-from orm import User, Track, syncdb, session
+from db import Session
+
+Session.initialise('postgresql://cyclerouter:bikes@localhost/cycleroutertest')
+session = Session.session
+
+from orm import User, Track
 from tests.util import get_test_resource
 
+
 def test_create_db():
-    syncdb()
+    Session.syncdb()
 
 
 def test_import_user():

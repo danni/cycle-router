@@ -18,8 +18,12 @@ import os
 import os.path
 import subprocess
 
-from rk import CommandLineClient as RK
+from db import Session
+
+Session.initialise()
+
 from orm import User
+from rk import CommandLineClient as RK
 
 rk = RK()
 rk.authorize()

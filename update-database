@@ -15,6 +15,10 @@
 
 import json
 
+from db import Session
+
+Session.initialise()
+
 from orm import User, Track, session
 from rk import RK, NotModified
 
