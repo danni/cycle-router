@@ -149,6 +149,10 @@ class Track(Base):
 
     @classmethod
     def from_rk_json(cls, json, commit=True):
+        """
+        CREATE or UPDATE a Track from RK JSON format
+        """
+
         user_id = json['userID']
         track_id = json['uri']
         # FIXME: timezone? does RK care?

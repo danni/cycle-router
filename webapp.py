@@ -13,12 +13,24 @@
 #
 # Authors: Danielle Madeley <danielle@madeley.id.au>
 
+SPHEROID = 'SPHEROID["WGS 84",6378137,298.257223563]'
+
 import json
 from urlparse import urljoin
 
 from flask import Flask, Response, \
                   redirect, request, url_for, stream_with_context, \
                   render_template
+from sqlalchemy import func
+
+
+from db import Session
+
+# FIXME: how does this play with multithreading?
+Session.initialise()
+session = Session.session
+
+from orm import User, Track, pg_functions
 from rk import RK
 
 
@@ -40,7 +52,10 @@ def index():
     Pretty landing page.
     """
 
-    return render_template('index.html')
+    nusers = session.query(Track.user_pk).distinct().count()
+    nkms = session.query(func.sum(pg_functions.length_spheroid(Track.points, SPHEROID))).select_from(Track).scalar() / 1000.
+
+    return render_template('index.html', **locals())
 
 
 @app.route('/authorize')
@@ -83,14 +98,19 @@ def get_token():
 
             rk.request_token()
 
+            # store to the database
+            User.from_rk(rk)
+
             yield yield_json(output="Accessing profile...")
 
             profile = rk.get_profile()
             items = list(rk.get_fitness_items())
             nitems = len(items)
 
-            yield yield_json(profile=profile, nitems=nitems, state='download')
+            yield yield_json(profile=profile, nitems=nitems, state='complete')
+            raise StopIteration
 
+            # FIXME pass this off to a celery task
             for n, item in enumerate(items):
                 item = rk.get_fitness_item(item)
                 yield yield_json(n=n, nitems=nitems)
