@@ -2,20 +2,11 @@ import json
 
 import numpy as np
 
-from db import Session
-
-Session.initialise('postgresql://cyclerouter:bikes@localhost/cycleroutertest')
-session = Session.session
-
 from orm import User, Track
 from tests.util import get_test_resource
 
 
-def test_create_db():
-    Session.syncdb()
-
-
-def test_import_user():
+def test_import_user(session):
     class FakeRk(object):
         def get_user(self):
             return {
@@ -66,7 +57,7 @@ def test_import_user():
     assert obj.token == 'TOKEN3'
 
 
-def test_api_obj_from_user():
+def test_api_obj_from_user(session):
     obj = session.query(User).filter(User.user_id == 1).one()
 
     assert obj
@@ -76,7 +67,7 @@ def test_api_obj_from_user():
     assert rk.token == 'TOKEN2'
 
 
-def test_import_track():
+def test_import_track(session):
     filename = get_test_resource('json/97684385.json')
 
     with open(filename) as f:
@@ -100,7 +91,7 @@ def test_import_track():
     assert np.abs(data['total_distance'] - length) < 10 # within 10m
 
 
-def test_reimport_track():
+def test_reimport_track(session):
     updated = session.query(Track).one().updated
 
     filename = get_test_resource('json/97684385.json')
@@ -114,7 +105,7 @@ def test_reimport_track():
     assert track.updated > updated
 
 
-def test_backref():
+def test_backref(session):
     user = User.get_user('11271062')
 
     assert len(user.tracks) == 1
@@ -124,7 +115,7 @@ def test_backref():
     assert track.track_id == '/fitnessActivities/97684385'
 
 
-def test_extra_func_length_spheroid():
+def test_extra_func_length_spheroid(session):
     track = session.query(Track).filter_by(id=1).first()
 
     filename = get_test_resource('json/97684385.json')
@@ -139,13 +130,13 @@ def test_extra_func_length_spheroid():
     assert np.abs(data['total_distance'] - length) < 10 # within 10m
 
 
-def test_request_track():
+def test_request_track(session):
     track = session.query(Track).filter_by(id=1).first()
 
     assert track
 
 
-def test_cascade():
+def test_cascade(session):
     track = session.query(Track).get(1)
     session.delete(track.user)
     session.commit()

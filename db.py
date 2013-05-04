@@ -88,7 +88,7 @@ class Session(object):
         return cls._Base
 
     @classmethod
-    def syncdb():
+    def syncdb(cls):
         """
         Drop defined tables and recreate them.
         """
