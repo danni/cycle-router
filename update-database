@@ -19,7 +19,9 @@ from db import Session
 
 Session.initialise()
 
-from orm import User, Track, session
+session = Session.session
+
+from orm import User, Track, NoResultFound
 from rk import RK, NotModified
 
 
@@ -41,7 +43,7 @@ for user in session.query(User).all():
             updated = track.updated
             print "existing,",
         except NoResultFound:
-            print "new"
+            print "new,",
             updated = None
 
         try:
@@ -50,7 +52,7 @@ for user in session.query(User).all():
             print "not modified"
             continue
 
-        print "updated"
+        print "downloaded"
 
         if json['equipment'] != 'None':
             continue
