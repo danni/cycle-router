@@ -19,8 +19,7 @@ Model definitions for an SQLAlchemy ORM
 
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, and_
-from sqlalchemy.orm import relationship
+from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy.orm.exc import NoResultFound
 
 from geoalchemy import GeometryColumn, LineString, GeometryDDL, \
@@ -29,12 +28,14 @@ from geoalchemy.functions import BaseFunction
 from geoalchemy.dialect import SpatialDialect
 from geoalchemy.postgis import pg_functions
 
+from webapp import app
 from rk import RK
-from db import Session
 from util import monkeypatch, monkeypatchclass
 
-Base = Session.Base
-session = Session.session
+
+# Flask-SQLAlchemy object
+db = SQLAlchemy(app)
+
 
 # monkeypatch in extra functions
 @monkeypatchclass(pg_functions)
@@ -59,23 +60,23 @@ def get_function(self, function_cls):
         return self.__super__get_function(function_cls)
 
 
-class User(Base):
+class User(db.Model):
     """
     Represents a user we've connected with.
     """
 
     __tablename__ = 'users'
 
-    id = Column(Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     # the RunKeeper user_id
-    user_id = Column(Integer, unique=True, nullable=False)
-    created = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated = Column(DateTime, nullable=False,
-                     default=datetime.utcnow, onupdate=datetime.utcnow)
-    service = Column(String(128), default='RunKeeper', nullable=False)
-    token = Column(String(128))
+    user_id = db.Column(db.Integer, unique=True, nullable=False)
+    created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated = db.Column(db.DateTime, nullable=False,
+                        default=datetime.utcnow, onupdate=datetime.utcnow)
+    service = db.Column(db.String(128), default='RunKeeper', nullable=False)
+    token = db.Column(db.String(128))
 
-    tracks = relationship('Track', cascade="all, delete, delete-orphan")
+    tracks = db.relationship('Track', cascade="all, delete, delete-orphan")
 
     @classmethod
     def from_rk(cls, rk, commit=True):
@@ -99,14 +100,14 @@ class User(Base):
                       token=token)
 
         if commit:
-            session.add(obj)
-            session.commit()
+            db.session.add(obj)
+            db.session.commit()
 
         return obj
 
     @classmethod
     def get_user(cls, user_id):
-        return session.query(cls).filter(cls.user_id == user_id).one()
+        return db.session.query(cls).filter(cls.user_id == user_id).one()
 
     def to_rk(self):
         """
@@ -116,22 +117,22 @@ class User(Base):
         return RK(token=self.token)
 
 
-class Track(Base):
+class Track(db.Model):
     """
     Represents a Track in a PostGIS database.
     """
 
     __tablename__ = 'tracks'
 
-    id = Column(Integer, primary_key=True)
-    user_pk = Column(Integer, ForeignKey('users.id'), nullable=False)
-    track_id = Column(String(128), nullable=False)
-    date = Column(DateTime, nullable=False)
-    updated = Column(DateTime, nullable=False,
+    id = db.Column(db.Integer, primary_key=True)
+    user_pk = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    track_id = db.Column(db.String(128), nullable=False)
+    date = db.Column(db.DateTime, nullable=False)
+    updated = db.Column(db.DateTime, nullable=False,
                      default=datetime.utcnow, onupdate=datetime.utcnow)
     points = GeometryColumn(LineString(4), nullable=False)
 
-    user = relationship('User')
+    user = db.relationship('User')
 
     def __init__(self, *args, **kwargs):
         """
@@ -176,8 +177,8 @@ class Track(Base):
                       points=points)
 
         if commit:
-            session.add(obj)
-            session.commit()
+            db.session.add(obj)
+            db.session.commit()
 
         return obj
 
@@ -188,8 +189,8 @@ class Track(Base):
         else:
             user_id = user
 
-        return session.query(Track).join(User).filter(and_(
+        return db.session.query(Track).join(User).filter(
             User.user_id == user_id,
-            Track.track_id == track_id)).one()
+            Track.track_id == track_id).one()
 
 GeometryDDL(Track.__table__)

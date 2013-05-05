@@ -23,109 +23,21 @@ from flask import Flask, Response, \
                   render_template
 from sqlalchemy import func
 
-
-from db import Session
-
-# FIXME: how does this play with multithreading?
-Session.initialise()
-session = Session.session
-
-from orm import User, Track, pg_functions
 from rk import RK
 
 
+# Flask application, create this before importing the orm
 app = Flask(__name__)
 
 
 class FlaskRK(RK):
+    """
+    Implement the RK authorisation routine for Flask
+    """
 
     @property
     def redirect_uri(self):
         return urljoin(request.url_root, url_for('authorized'))
-
-
-rk = FlaskRK()
-
-@app.route('/')
-def index():
-    """
-    Pretty landing page.
-    """
-
-    nusers = session.query(Track.user_pk).distinct().count()
-    nkms = session.query(func.sum(pg_functions.length_spheroid(Track.points, SPHEROID))).select_from(Track).scalar() / 1000.
-
-    return render_template('index.html', **locals())
-
-
-@app.route('/authorize')
-def authorize():
-    """
-    Redirect to the authorization process.
-    """
-
-    return redirect(rk.authorisation_uri)
-
-
-@app.route('/authorized')
-def authorized():
-    """
-    Pretty authorized page
-    """
-
-    return render_template('authorized.html')
-
-
-@app.route('/get-token')
-def get_token():
-    """
-    Retrieve the RK code, redirect the user somewhere nice
-    """
-
-    def yield_json(**kwargs):
-        return 'data: ' + json.dumps(kwargs) + '\n\n'
-
-    @stream_with_context
-    def generate():
-        """
-        This generator progressively returns data to the browser.
-        """
-
-        try:
-            rk.extract_code(request.url)
-
-            yield yield_json(output="Requesting session token...")
-
-            rk.request_token()
-
-            # store to the database
-            User.from_rk(rk)
-
-            yield yield_json(output="Accessing profile...")
-
-            profile = rk.get_profile()
-            items = list(rk.get_fitness_items())
-            nitems = len(items)
-
-            yield yield_json(profile=profile, nitems=nitems, state='complete')
-            raise StopIteration
-
-            # FIXME pass this off to a celery task
-            for n, item in enumerate(items):
-                item = rk.get_fitness_item(item)
-                yield yield_json(n=n, nitems=nitems)
-
-            yield yield_json(
-                output="Transfer complete. Terminating connection",
-                state='complete')
-        except Exception as e:
-            yield yield_json(
-                output="CARRIER TERMINATED",
-                error=e.message,
-                state='failed')
-            raise e
-
-    return Response(generate(), mimetype='text/event-stream')
 
 
 def omg(code):
@@ -138,5 +50,10 @@ for error in range(400, 420) + range(500, 506):
     app.error_handler_spec[None][error] = omg(error)
 
 
+from views import *
+
+
 if __name__ == "__main__":
+    app.config['SQLALCHEMY_DATABASE_URI'] = \
+        'postgresql://cyclerouter:bikes@localhost/cyclerouter'
     app.run(debug=True, threaded=True)

@@ -8,7 +8,7 @@ setup(name='cyclerouter',
       url='https://github.com/danni/cycle-router',
       install_requires=[
         'Flask>=0.9',
-        'SQLAlchemy>=0.7.9',
+        'Flask-SQLAlchemy>=0.16',
         'GeoAlchemy>=0.7.2',
         'httplib2>=0.7.7',
       ]

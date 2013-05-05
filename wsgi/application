@@ -27,13 +27,11 @@ try:
 except IOError:
     pass
 
-# initialise database for OpenShift
-from cyclerouter.db import Session
+from cyclerouter.webapp import app as application
 
 try:
-    Session.initialise(database='postgresql://cyclerouter:bikes@{OPENSHIFT_POSTGRESQL_DB_HOST}:{OPENSHIFT_POSTGRESQL_DB_PORT}/cyclerouter'.format(**os.environ))
+    application.config['SQLALCHEMY_DATABASE_URI'] = \
+        'postgresql://cyclerouter:bikes@{OPENSHIFT_POSTGRESQL_DB_HOST}:{OPENSHIFT_POSTGRESQL_DB_PORT}/cyclerouter'.format(**os.environ))
 except KeyError:
     # not openshift?
     pass
-
-from cyclerouter.webapp import app as application
