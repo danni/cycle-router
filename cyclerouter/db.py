@@ -32,6 +32,11 @@ class NotInitialised(Exception):
         super(Exception, self).__init__("Session is not initialised")
 
 
+class AlreadyInitialised(Exception):
+    def __init__(self):
+        super(Exception, self).__init__("Attempted to initialise session twice")
+
+
 class Session(object):
     """
     Stores all of the database session information.
@@ -47,7 +52,22 @@ class Session(object):
     _Base = None
 
     @classmethod
-    def initialise(cls, database='postgresql://cyclerouter:bikes@localhost/cyclerouter'):
+    def initialise(cls, database=None, force=False):
+        """
+        Initialise the database session
+
+        @database is an SQLAlchemy database URL
+        """
+
+        if database is None:
+            database = 'postgresql://cyclerouter:bikes@localhost/cyclerouter'
+
+        if cls._engine:
+            if force:
+                raise AlreadyInitialised()
+            else:
+                return
+
         cls._engine = create_engine(database)
         Session = sessionmaker(bind=cls._engine)
         cls._session = Session()
