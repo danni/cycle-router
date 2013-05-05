@@ -10,5 +10,6 @@ setup(name='cyclerouter',
         'Flask>=0.9',
         'SQLAlchemy>=0.7.9',
         'GeoAlchemy>=0.7.2',
+        'httplib2>=0.7.7',
       ]
 )
