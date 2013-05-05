@@ -2,7 +2,7 @@ import pytest
 
 from sqlalchemy.exc import OperationalError
 
-from db import Session
+from cyclerouter.db import Session
 
 
 Session.initialise('postgresql://cyclerouter:bikes@localhost/cycleroutertest')

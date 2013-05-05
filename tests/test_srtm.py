@@ -5,7 +5,7 @@ import pytest
 from matplotlib import pyplot as plt
 from numpy.testing import assert_almost_equal, assert_allclose
 
-from srtm import SRTM
+from cyclerouter.processing.srtm import SRTM
 
 from tests.test_json import json as track_json
 
@@ -20,7 +20,7 @@ def grid():
 
 @pytest.fixture
 def track(track_json):
-    from track import RKJSON
+    from cyclerouter.processing.track import RKJSON
 
     return RKJSON(track_json)
 
@@ -74,7 +74,7 @@ def test_plot_srtm(grid):
 def test_against_google(grid):
 
     import json
-    from rk import Client
+    from cyclerouter.rk import Client
 
     client = Client()
 
@@ -123,7 +123,7 @@ def test_against_google(grid):
 ])
 def test_extract_point(grid, lat, lon):
     import json
-    from rk import Client
+    from cyclerouter.rk import Client
 
     calc = grid.extract_point(lat, lon)
 

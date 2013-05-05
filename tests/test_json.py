@@ -6,8 +6,8 @@ import pytest
 from matplotlib import pyplot as plt
 from mpl_toolkits.basemap import Basemap
 
-from track import RKJSON, smooth, BadInputException
-from binning import Grid
+from cyclerouter.processing.track import RKJSON, smooth, BadInputException
+from cyclerouter.processing.binning import Grid
 
 
 NO_PLOTS = not (os.environ.get('PLOTS', 'no') == 'yes')

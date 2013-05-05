@@ -1,0 +1,4 @@
+* Move downloads to a separate task if possible -- how to signal to the UI
+* Statistics?
+* Determine spheroid automatically?
+* Validation against runkeeper. How?

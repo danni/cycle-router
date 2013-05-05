@@ -2,7 +2,7 @@ import json
 
 import numpy as np
 
-from orm import User, Track
+from cyclerouter.orm import User, Track
 from tests.util import get_test_resource
 
 

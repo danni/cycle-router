@@ -7,7 +7,7 @@ import pytest
 from matplotlib import pyplot as plt
 from mpl_toolkits.basemap import Basemap
 
-from track import GPX, smooth
+from cyclerouter.processing.track import GPX, smooth
 
 
 NO_PLOTS = not (os.environ.get('PLOTS', 'no') == 'yes')

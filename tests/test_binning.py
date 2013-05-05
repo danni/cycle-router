@@ -8,8 +8,8 @@ import scipy as sp
 import scipy.stats
 from matplotlib import pyplot as plt
 
-from track import RKJSON, BadInputException
-from binning import Grid, MELBOURNE, Direction
+from cyclerouter.processing.track import RKJSON, BadInputException
+from cyclerouter.processing.binning import Grid, MELBOURNE, Direction
 
 
 NO_PLOTS = not (os.environ.get('PLOTS', 'no') == 'yes')

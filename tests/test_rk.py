@@ -1,7 +1,7 @@
 import os
 import pytest
 
-from rk import CommandLineClient as RK
+from cyclerouter.rk import CommandLineClient as RK
 
 
 NO_NET = not (os.environ.get('NET', 'no') == 'yes')
@@ -62,4 +62,4 @@ def test_get_fitness_item(rk):
 
     print item
 
-    assert 0
+    assert item
