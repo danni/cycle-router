@@ -109,7 +109,7 @@ def get_token():
             yield yield_json(
                 output="Transfer complete. Terminating connection",
                 state='complete')
-        except Exception as e:
+        except StandardError as e:
             yield yield_json(
                 output="CARRIER TERMINATED",
                 error=e.message,
