@@ -25,11 +25,6 @@ from httplib2 import Http, ServerNotFoundError
 from keys import * # API keys: CLIENT_ID, CLIENT_SECRET
 
 
-API_URL = 'https://api.runkeeper.com'
-AUTHORIZATION_URL = 'https://runkeeper.com/apps/authorize'
-ACCESS_TOKEN_URL = 'https://runkeeper.com/apps/token'
-
-
 class AuthenticationException(Exception):
     pass
 
@@ -84,6 +79,10 @@ class RK(object):
     - call rk.request_token()
     """
 
+    API_URL = 'https://api.runkeeper.com'
+    AUTHORIZATION_URL = 'https://runkeeper.com/apps/authorize'
+    ACCESS_TOKEN_URL = 'https://runkeeper.com/apps/token'
+
     def __init__(self, token=None):
 
         self.client = Client()
@@ -109,7 +108,7 @@ class RK(object):
         The URI to visit for authorization
         """
 
-        return AUTHORIZATION_URL + '?' + \
+        return self.AUTHORIZATION_URL + '?' + \
                urlencode(dict(client_id=CLIENT_ID,
                               response_type='code',
                               redirect_uri=self.redirect_uri))
@@ -141,7 +140,8 @@ class RK(object):
                 "Need authorization code before session token")
 
         try:
-            resp, content = self.client.request(ACCESS_TOKEN_URL, method='POST',
+            resp, content = self.client.request(self.ACCESS_TOKEN_URL,
+                    method='POST',
                     data=dict(grant_type='authorization_code',
                               code=self.code,
                               client_id=CLIENT_ID,
@@ -174,7 +174,8 @@ class RK(object):
 
         headers.update(kwargs.pop('headers', {}))
 
-        resp, content = self.client.request(API_URL + path, headers=headers,
+        resp, content = self.client.request(self.API_URL + path,
+                                            headers=headers,
                                             **kwargs)
 
         exceptions = {
