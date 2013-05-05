@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block extrastyle %}
+body {
+  background-color: #f7f7f7;
+}
+{% endblock %}
+
+{% block content %}
+  <div class="jumbo">
+    <h1>Don't panic!</h1>
+    <p class="muted">
+      It's okay, we promise!
+    </p>
+    <p>
+      Something must have gone quite wrong, because you got the server
+      response <b>{{ error }}</b>.
+    </p>
+
+    <img src="static/img/hysterical.jpg" alt="Hysterical Penguins"
+    	 class="img-rounded"/>
+  </div>
+{% endblock %}

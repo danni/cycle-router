@@ -128,5 +128,15 @@ def get_token():
     return Response(generate(), mimetype='text/event-stream')
 
 
+def omg(code):
+    def inner(e):
+        return render_template('omg.html', error=e), code
+
+    return inner
+
+for error in range(400, 420) + range(500, 506):
+    app.error_handler_spec[None][error] = omg(error)
+
+
 if __name__ == "__main__":
     app.run(debug=True, threaded=True)
